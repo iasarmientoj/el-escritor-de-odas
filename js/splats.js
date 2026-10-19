@@ -6,15 +6,19 @@
 const VERT = `#version 300 es
 in vec2 aCorner;
 in vec2 aHome;
-in vec3 aShape;   // sx, sy (unidades de imagen), rotación
+in vec3 aShape;   // sx, sy (unidades de imagen), rotacion
 in vec4 aFly;     // inicio x, inicio y, llegada, semilla
 in vec4 aColor;
 in vec2 aOff;
 uniform vec2 uView;
 uniform vec3 uRect;   // x, y, px por unidad (ancho de la imagen = 1)
 uniform float uProg, uTime, uGhost, uAlpha, uDpr;
+uniform float uBurst, uSpread, uFade;   // explosion al abrir el libro (0..1), alcance en unidades de imagen y desvanecido final
+uniform float uKeep;   // cuantas pinceladas (las mas grandes) siguen visibles al final de la explosion
+uniform vec2 uCenter;
 out vec2 vUV;
 out vec4 vCol;
+
 void main() {
   float seed = aFly.w;
   float e = uGhost > 0.5 ? 1.0 : clamp((uProg - aFly.z) / 0.15, 0.0, 1.0);
@@ -23,13 +27,35 @@ void main() {
   vec2 perp = vec2(-dir.y, dir.x);
   vec2 p = mix(aFly.xy, aHome, k) + perp * sin(k * 3.14159) * (seed - 0.5) * 0.7;
   p += aOff * k;
+  // explosion: cada pincelada sale disparada desde el centro de la imagen y se disuelve
+  // Rafaga: cada pincelada sale en su momento (no todas a la vez), viaja hasta el
+  // borde de la pantalla en su direccion (el frente toma la forma de la pantalla,
+  // no de un circulo) y ondula como un petalo en el viento.
+  float delay = 0.28 * fract(seed * 5.13);
+  float tb = clamp((uBurst - delay) / (1.0 - delay), 0.0, 1.0);
+  float eb = 1.0 - pow(1.0 - tb, 2.0);
+  if (uBurst > 0.0) {
+    vec2 d = aHome - uCenter + (vec2(fract(seed * 13.7), fract(seed * 7.3)) - 0.5) * 0.12;
+    vec2 bd = normalize(d + 1e-4);
+    // distancia (en unidades de imagen) desde el centro hasta el borde de la pantalla
+    vec2 cp = uRect.xy + uCenter * uRect.z;
+    float ex = bd.x > 0.0 ? (uView.x - cp.x) / bd.x : -cp.x / min(bd.x, -1e-4);
+    float ey = bd.y > 0.0 ? (uView.y - cp.y) / bd.y : -cp.y / min(bd.y, -1e-4);
+    float edge = min(ex, ey) / uRect.z;
+    float reach = edge * (0.3 + 0.95 * fract(seed * 91.7));
+    vec2 side = vec2(-bd.y, bd.x);
+    float wave = sin(eb * 7.0 + seed * 23.0) * 0.18 * reach * eb * (1.0 - eb) * 2.0;
+    p += bd * eb * reach + side * wave;
+    p.y -= eb * eb * 0.12 * edge;   // leve subida, como petalos que se lleva el aire
+  }
   float s = uRect.z;
   vec2 sz = aShape.xy * s;
   float minS = 0.55 * uDpr;
   float aa = 1.0;
   float m = min(sz.x, sz.y);
   if (m < minS) { aa = max(m / minS, 0.25); sz = max(sz, vec2(minS)); }
-  sz *= mix(1.15, 1.0, k);
+  // al explotar, las pinceladas crecen hasta cubrir la pantalla entera
+  sz *= mix(1.15, 1.0, k) * (1.0 + eb * 26.0);
   float c = cos(aShape.z), sn = sin(aShape.z);
   vec2 q = aCorner * 3.0 * sz;
   vec2 rq = vec2(q.x * c - q.y * sn, q.x * sn + q.y * c);
@@ -37,6 +63,9 @@ void main() {
   gl_Position = vec4(px.x / uView.x * 2.0 - 1.0, 1.0 - px.y / uView.y * 2.0, 0.0, 1.0);
   vUV = aCorner * 3.0;
   float vis = uGhost > 0.5 ? uAlpha : smoothstep(0.0, 0.5, e) * mix(0.35, 1.0, k * k) * uAlpha;
+  // las pinceladas finas se apagan pronto; las grandes cubren la pantalla hasta el desvanecido
+  if (float(gl_InstanceID) >= uKeep) vis *= 1.0 - smoothstep(0.15, 0.55, uBurst);
+  vis *= 1.0 - uFade;
   vCol = vec4(aColor.rgb, aColor.a * aa * vis);
 }`;
 
@@ -52,6 +81,7 @@ void main() {
   o = vec4(vCol.rgb * a, a);
 }`;
 
+const KEEP = 2600;   // pinceladas gruesas (van primero en el archivo)
 const LAYER_BASE = [0.0, 0.08, 0.2, 0.32, 0.45, 0.55];
 
 // ---------------------------------------------------------------- carga
@@ -163,7 +193,7 @@ class Renderer {
     this.prog = p;
     this.loc = {};
     for (const a of ['aCorner', 'aHome', 'aShape', 'aFly', 'aColor', 'aOff']) this.loc[a] = gl.getAttribLocation(p, a);
-    for (const u of ['uView', 'uRect', 'uProg', 'uTime', 'uGhost', 'uAlpha', 'uDpr']) this.loc[u] = gl.getUniformLocation(p, u);
+    for (const u of ['uView', 'uRect', 'uProg', 'uTime', 'uGhost', 'uAlpha', 'uDpr', 'uBurst', 'uSpread', 'uCenter', 'uFade', 'uKeep']) this.loc[u] = gl.getUniformLocation(p, u);
     this.quad = gl.createBuffer();
     gl.bindBuffer(gl.ARRAY_BUFFER, this.quad);
     gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1, -1, 1, -1, -1, 1, 1, 1]), gl.STATIC_DRAW);
@@ -236,6 +266,11 @@ class Renderer {
     gl.uniform3f(L.uRect, r.x * d, r.y * d, r.w * d);
     gl.uniform1f(L.uTime, time);
     gl.uniform1f(L.uDpr, d);
+    gl.uniform1f(L.uBurst, view.burst || 0);
+    gl.uniform1f(L.uFade, view.fade || 0);
+    gl.uniform1f(L.uKeep, KEEP);
+    gl.uniform1f(L.uSpread, Math.hypot(cw, ch) / Math.max(1, r.w * d));
+    gl.uniform2f(L.uCenter, 0.5, set.aspect / 2);
     const ghost = view.ghost * (1 - Math.min(1, view.p * 1.6));
     if (ghost > 0.002) {
       gl.uniform1f(L.uGhost, 1); gl.uniform1f(L.uProg, 1); gl.uniform1f(L.uAlpha, ghost);
@@ -243,7 +278,8 @@ class Renderer {
     }
     if (view.p > 0.001) {
       gl.uniform1f(L.uGhost, 0); gl.uniform1f(L.uProg, view.p); gl.uniform1f(L.uAlpha, 1);
-      gl.drawArraysInstanced(gl.TRIANGLE_STRIP, 0, 4, set.n);
+      const count = (view.burst || 0) > 0.55 ? Math.min(set.n, KEEP) : set.n;
+      gl.drawArraysInstanced(gl.TRIANGLE_STRIP, 0, 4, count);
     }
     gl.bindVertexArray(null);
     const ctx = view.ctx;
@@ -272,7 +308,7 @@ export function createView(canvas, url, opts = {}) {
   const view = {
     canvas, ctx: canvas.getContext('2d'), set: null, p: opts.initial ?? 0,
     ghost: opts.ghost ?? 0, getRect: opts.getRect, target: opts.target || (() => 1),
-    speed: opts.speed ?? 2.2, visible: false, dpr: 1, rect: { x: 0, y: 0, w: 1 },
+    speed: opts.speed ?? 2.2, visible: false, dpr: 1, rect: { x: 0, y: 0, w: 1 }, maxDpr: opts.maxDpr, burst: 0,
     mouse: { x: 0, y: 0, vx: 0, vy: 0, active: false, lastT: 0 },
     dirtyFrame: true, ready: null,
   };
@@ -309,7 +345,7 @@ export function pointer(view, clientX, clientY, inside = true) {
 
 function layout(view) {
   const c = view.canvas;
-  const dpr = Math.min(window.devicePixelRatio || 1, 2);
+  const dpr = Math.min(window.devicePixelRatio || 1, view.maxDpr || 2);
   const w = Math.round(c.clientWidth * dpr), h = Math.round(c.clientHeight * dpr);
   if (!w || !h) return false;
   if (c.width !== w || c.height !== h) { c.width = w; c.height = h; view.dirtyFrame = true; }
@@ -348,4 +384,44 @@ function frame(now) {
   }
   if (any) requestAnimationFrame(frame);
   else running = false;
+}
+
+/**
+ * Explosión al abrir el libro, en dos tiempos:
+ *   burst(view)  -> las pinceladas salen disparadas y crecen hasta cubrir la pantalla
+ *   fadeOut(view) -> cuando lo de debajo ya está listo, se desvanecen
+ */
+function animate(view, key, ms) {
+  return new Promise(resolve => {
+    const t0 = performance.now();
+    const tick = now => {
+      view[key] = Math.min(1, (now - t0) / ms);
+      if (view[key] < 1) requestAnimationFrame(tick); else resolve();
+    };
+    setVisible(view, true);
+    requestAnimationFrame(tick);
+  });
+}
+export const burst = (view, ms = 900) => animate(view, 'burst', ms);
+export const fadeOut = (view, ms = 800) => animate(view, 'fade', ms);
+
+/**
+ * Transición de un solo movimiento: explotan, cubren la pantalla y se desvanecen
+ * sin detenerse. onCovered se llama cuando la pantalla ya está cubierta.
+ */
+export function transition(view, ms = 2100, onCovered) {
+  return new Promise(resolve => {
+    const t0 = performance.now();
+    let covered = false;
+    const tick = now => {
+      const t = Math.min(1, (now - t0) / ms);
+      view.burst = t;
+      const f = Math.max(0, (t - 0.5) / 0.5);
+      view.fade = f * f * (3 - 2 * f);
+      if (!covered && t >= 0.32) { covered = true; onCovered && onCovered(); }
+      if (t < 1) requestAnimationFrame(tick); else resolve();
+    };
+    setVisible(view, true);
+    requestAnimationFrame(tick);
+  });
 }

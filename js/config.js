@@ -6,8 +6,8 @@ export const CONFIG = {
   // el botón "Comprar" abre un correo para pedir el libro.
   buyUrl: '',
 
-  // Perfil de TikTok, p. ej. 'https://www.tiktok.com/@elescritordeodas'. Vacío = oculto.
-  tiktokUrl: '',
+  // Perfil de TikTok. Vacío = se oculta el botón.
+  tiktokUrl: 'https://www.tiktok.com/@elescritordeodas',
 
   // Al terminar el audio de una oda, pasar sola a la siguiente y seguir leyendo.
   autoContinue: true,

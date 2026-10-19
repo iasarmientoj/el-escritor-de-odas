@@ -44,7 +44,7 @@ export class Reader {
     this.initInput();
     this.loadPoem(-1, false);
     window.addEventListener('resize', () => {
-      if (this.root.hidden) return;
+      if (this.root.hidden) { this.stale = true; return; }
       clearTimeout(this._rt);
       this._rt = setTimeout(() => this.build(), 220);
     });
@@ -56,11 +56,27 @@ export class Reader {
     this.root.hidden = false;
     document.body.style.overflow = 'hidden';
     requestAnimationFrame(() => this.root.classList.add('show'));
-    if (first || !this.pages.length) this.build();
+    if (!this.pages.length || this.stale) { this.build(); this.stale = false; }
     const idx = slug ? this.poems.findIndex(p => p.slug === slug) : -1;
     if (idx >= 0) this.goToPoem(idx, first);
     else if (first) this.goTo(0, true);
     this.refreshVisible();
+  }
+
+  // Arma las páginas de antemano (con el lector invisible) para que abrir el libro
+  // no congele la animación de entrada.
+  prebuild() {
+    if (this.pages.length || !this.root.hidden) return;
+    const r = this.root;
+    this.quiet = true;
+    r.style.visibility = 'hidden';
+    r.hidden = false;
+    this.build();
+    this.goTo(0, true);
+    r.hidden = true;
+    r.style.visibility = '';
+    this.quiet = false;
+    this.pages.forEach(p => p.view && setVisible(p.view, false));
   }
 
   close() {
@@ -151,7 +167,7 @@ export class Reader {
     const p = { el: page, kind: 'cover' };
     this.addArt(p, COVER_SPLATS, () => {
       const w = this.pw * 0.74;
-      return { x: this.pw * 0.13, y: this.ph - w * 4 / 3 - this.pw * 0.01, w };
+      return { x: this.pw * 0.13, y: this.ph - w * 4 / 3 - this.ph * 0.075, w };
     }, { cover: true });
     return p;
   }
@@ -508,7 +524,7 @@ export class Reader {
     const k = this.currentPoem();
     const slug = k >= 0 ? this.poems[k].slug : '';
     const hash = '#libro' + (slug ? '/' + slug : '');
-    if (location.hash !== hash) history.replaceState(null, '', hash);
+    if (!this.quiet && location.hash !== hash) history.replaceState(null, '', hash);
     if (k !== this.audioPoem) this.loadPoem(k, this.continueNext);
     this.continueNext = false;
     this.root.querySelector('[data-prev]').disabled = this.pos === 0;

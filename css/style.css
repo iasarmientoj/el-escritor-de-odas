@@ -91,13 +91,19 @@ h1 {
 }
 h1 em { color: #e9b84a; font-weight: 400; }
 .bio { margin: 0; font-size: clamp(.95rem, 1.05vw, 1.08rem); line-height: 1.5; color: rgba(243, 237, 226, .88); text-shadow: 0 1px 12px rgba(0,0,0,.5); }
-.contact-btn {
+.author-actions {
   position: absolute; z-index: 1; left: 50%; bottom: clamp(18px, 4vh, 40px); transform: translateX(-50%);
+  display: flex; gap: .6rem; flex-wrap: wrap; justify-content: center; width: max-content; max-width: calc(100% - 32px);
+}
+.contact-btn {
   background: rgba(251, 247, 239, .94); color: var(--ink); border-color: transparent;
   padding: .65em 1.6em; white-space: nowrap; backdrop-filter: blur(4px);
   box-shadow: 0 10px 30px -10px rgba(0,0,0,.6);
 }
-.contact-btn:hover { transform: translateX(-50%) translateY(-1px); background: #fff; }
+.contact-btn:hover { transform: translateY(-1px); background: #fff; }
+.tiktok-btn { background: rgba(20, 18, 16, .78); color: #fbf7ef; border-color: rgba(251, 247, 239, .35); }
+.tiktok-btn:hover { background: #000; }
+.contact-btn.tiktok-btn svg { color: #fbf7ef; }
 .contact-btn svg { width: 1.15em; height: 1.15em; color: #c5221f; }
 
 .actions { display: flex; flex-wrap: wrap; gap: .6rem; }
@@ -155,7 +161,7 @@ h1 em { color: #e9b84a; font-weight: 400; }
 .book-3d:hover .book-pages { transform: rotateY(-17deg) translateZ(-6px); }
 .cover-splats { position: absolute; inset: 0; width: 100%; height: 100%; display: block; mix-blend-mode: multiply; }
 /* imagen original al 50 % bajo los splats: mismo rectángulo que en js (x 13 %, ancho 74 %) */
-.cover-base { position: absolute; left: 13%; width: 74%; bottom: .75%; aspect-ratio: 3 / 4; height: auto; opacity: .5; mix-blend-mode: multiply; pointer-events: none; }
+.cover-base { position: absolute; left: 13%; width: 74%; bottom: 7.5%; aspect-ratio: 3 / 4; height: auto; opacity: .5; mix-blend-mode: multiply; pointer-events: none; }
 .cover-title {
   position: absolute; left: 0; right: 0; top: 7%; text-align: center; pointer-events: none; z-index: 3;
   font-family: var(--display); font-weight: 500; font-size: 9.5cqw; line-height: 1; color: var(--ink);
@@ -180,6 +186,9 @@ h1 em { color: #e9b84a; font-weight: 400; }
 .book-card.soon .book-cover span small { display: block; font-style: normal; font-family: var(--text); font-size: .38em; letter-spacing: .3em; text-transform: uppercase; margin-top: .9em; }
 .book-card.soon h3, .book-card.soon .book-sub { color: rgba(42,37,32,.38); }
 .book-card.soon .book-pages { opacity: .5; }
+
+/* capa de la explosión de splats al abrir el libro */
+.burst-layer { position: fixed; inset: 0; width: 100vw; height: 100vh; z-index: 30; pointer-events: none; }
 
 /* ------------------------------------------------------------ lector */
 .reader {
@@ -336,8 +345,7 @@ h1 em { color: #e9b84a; font-weight: 400; }
   .portrait { position: relative; left: auto; transform: none; width: 100%; margin-top: -24px; }
   .bio { max-width: 30ch; margin-left: auto; }
   .author-text { order: -1; }
-  .contact-btn { position: relative; left: auto; bottom: auto; transform: none; align-self: center; margin: -68px auto 24px; }
-  .contact-btn:hover { transform: translateY(-1px); }
+  .author-actions { position: relative; left: auto; bottom: auto; transform: none; align-self: center; margin: -76px auto 22px; }
   h1 { font-size: 2.3rem; }
   .bio { font-size: .92rem; }
   .shelf-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); overflow: visible; mask-image: none; }

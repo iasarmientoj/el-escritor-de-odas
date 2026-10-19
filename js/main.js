@@ -1,5 +1,5 @@
 import { CONFIG, buyHref } from './config.js';
-import { createView, setVisible, pointer, supported } from './splats.js';
+import { createView, destroyView, setVisible, pointer, transition, supported } from './splats.js';
 import { Reader } from './book.js';
 
 const $ = (s, r = document) => r.querySelector(s);
@@ -12,8 +12,8 @@ $$('[data-buy]').forEach(a => {
 });
 $$('[data-mail]').forEach(a => { a.href = `mailto:${CONFIG.email}`; a.textContent = CONFIG.email; });
 $$('[data-tiktok]').forEach(a => {
-  if (!CONFIG.tiktokUrl) return;
-  a.href = CONFIG.tiktokUrl; a.target = '_blank'; a.rel = 'noopener'; a.hidden = false;
+  if (!CONFIG.tiktokUrl) { a.hidden = true; return; }
+  a.href = CONFIG.tiktokUrl; a.target = '_blank'; a.rel = 'noopener';
 });
 
 // contacto por Gmail (abre la redacción de Gmail en una pestaña nueva)
@@ -45,7 +45,7 @@ if (supported) {
     getRect: () => {
       const w = coverCanvas.clientWidth, h = coverCanvas.clientHeight;
       const iw = w * 0.74;
-      return { x: w * 0.13, y: h - iw * 4 / 3 - w * 0.01, w: iw };
+      return { x: w * 0.13, y: h - iw * 4 / 3 - h * 0.075, w: iw };
     },
     target: () => 1, initial: 1,
   });
@@ -64,7 +64,7 @@ if (supported) {
   const img = new Image();
   img.src = 'assets/img/oda-al-girasol-feliz.jpg';
   img.alt = '';
-  img.style.cssText = 'position:absolute;left:8%;bottom:1%;width:84%;mix-blend-mode:multiply';
+  img.style.cssText = 'position:absolute;left:13%;bottom:7.5%;width:74%;mix-blend-mode:multiply';
   coverCanvas.replaceWith(img);
 }
 
@@ -73,6 +73,16 @@ const readerEl = $('#reader');
 let reader = null;
 let cameFromLanding = false;
 const data = fetch('data/poems.json').then(r => r.json());
+
+// preparar el libro mientras se ve la landing, para que abrirlo sea instantáneo
+data.then(d => {
+  const idle = window.requestIdleCallback || (fn => setTimeout(fn, 1200));
+  idle(async () => {
+    await document.fonts.ready;
+    if (!reader) reader = new Reader(readerEl, d);
+    if (readerEl.hidden) reader.prebuild();
+  }, { timeout: 2500 });
+});
 
 async function route() {
   const m = location.hash.match(/^#libro(?:\/([\w-]+))?/);
@@ -86,10 +96,34 @@ async function route() {
   }
 }
 
-$$('[data-open]').forEach(b => b.addEventListener('click', () => {
+// Al abrir el libro, las pinceladas de la portada salen disparadas por toda la
+// pantalla, se disuelven y debajo aparece el lector con la portada lista.
+let opening = false;
+async function openBook() {
   cameFromLanding = true;
-  location.hash = 'libro';
-}));
+  const calm = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  if (!coverView || !coverView.set || calm) { location.hash = 'libro'; return; }
+  if (opening) return;
+  opening = true;
+  const b = coverCanvas.getBoundingClientRect();
+  const iw = b.width * 0.74;
+  const rect = { x: b.left + b.width * 0.13, y: b.bottom - iw * 4 / 3 - b.height * 0.075, w: iw };
+  const layer = document.createElement('canvas');
+  layer.className = 'burst-layer';
+  document.body.appendChild(layer);
+  const fx = createView(layer, 'assets/splats/oda-al-girasol-feliz.bin', {
+    getRect: () => rect, target: () => 1, initial: 1, maxDpr: 0.6,
+  });
+  await fx.ready;
+  coverCanvas.style.visibility = 'hidden';
+  // explotan, cubren la pantalla (ahí se abre el lector, ya preparado) y se desvanecen
+  await transition(fx, 2100, () => { location.hash = 'libro'; });
+  destroyView(fx);
+  layer.remove();
+  coverCanvas.style.visibility = '';
+  opening = false;
+}
+$$('[data-open]').forEach(b => b.addEventListener('click', openBook));
 $('[data-close]').addEventListener('click', () => {
   if (cameFromLanding) { cameFromLanding = false; history.back(); }
   else { history.pushState(null, '', location.pathname); route(); }
