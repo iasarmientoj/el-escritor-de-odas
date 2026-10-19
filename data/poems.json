@@ -1,0 +1,73 @@
+{
+  "book": {
+    "title": "Un girasol cobró consciencia",
+    "author": "Iván Sarmiento",
+    "pen": "El escritor de odas"
+  },
+  "poems": [
+    {
+      "slug": "oda-al-girasol-triste",
+      "title": "Oda al girasol triste",
+      "text": "Nadie me dijo\nQue los girasoles\nLloraban amarillo.\n\nLloran porque jamás podrán alcanzar al sol, ese anhelo gigante que miran, tuercen sus cuellos con tal de vivirlo tan solo un poco, su calor es sinónimo de verdad, una verdad que jamás conocerán.\n\nLloran amarillo, porque dejan su esencia en cada lágrima, su tristeza se ve palpable.\n\nY nosotros, que no entendemos nada, la llamamos la flor más alegre del jardín. Le vemos la cara redonda, los pétalos abiertos, y decimos: mira qué contenta. Nadie sospecha de una pena que viene vestida de fiesta.\n\nSu propia hoja recoge el llanto. No tiene a nadie más. Se consuela a sí mismo, de la cintura para abajo, como quien se guarda las lágrimas en el bolsillo para que no hagan ruido al caer.\n\nPero he aquí la burla:\nDe tanto mirar al sol\nTerminó pareciéndose a él.\n\nTiene su color, su forma, su corona. Es lo más cercano al sol que ha dado la tierra, y es el único que no lo sabe. Busca arriba lo que lleva puesto. Persigue un retrato del que él mismo es el original más próximo.\n\nY el sol, tan alto, tan verdadero, no puede mirarse. Nunca se ha visto. Si quisiera saber cómo es, tendría que bajar la vista hasta un patio cualquiera y encontrarse ahí, pequeño, torcido, llorando por él.\n\nNadie me dijo tampoco\nQue ese llanto era semilla.\n\nCada lágrima amarilla es polen. De su tristeza nacerán otros girasoles, que también torcerán el cuello, que también llorarán. Así se hereda el anhelo: no se enseña, se derrama.\n\nCuando cae la noche, el girasol inclina la cabeza. Uno pensaría que se rinde. Pero solo descansa de tanto querer, y espera, mirando al suelo, el lugar exacto por donde mañana volverá a salir lo imposible.\n\nQuizá por eso llora amarillo.\nNo porque no alcance al sol,\nSino porque nadie le ha dicho\nQue ya lo es.",
+      "audio": "assets/audio/oda-al-girasol-triste.mp3",
+      "splats": "assets/splats/oda-al-girasol-triste.bin",
+      "image": "assets/img/oda-al-girasol-triste.jpg"
+    },
+    {
+      "slug": "oda-al-girasol-feliz",
+      "title": "Oda al girasol feliz",
+      "text": "No todas las lágrimas son de tristeza,\nalgunas son de polen,\npor la felicidad de poder mirar al sol día tras día.\n\nEsa felicidad que está en la visión que tengo de tus recuerdos,\nen casi la visualización real que tengo de ti aunque estés lejos.\n\nEl girasol ve hoy el alma del sol,\npor eso proyecta su figura.\n\nY se le parece tanto\nque hay mañanas en que el patio amanece dos veces.\n\nNo le hace falta tocarlo,\nle basta saber que está ahí,\nque mañana vuelve a salir\npor el mismo lado de siempre.\n\nAsí te miro yo,\nde lejos y de frente,\ncon el cuello torcido de tanto buscarte\ny sin ninguna queja.\n\nPorque la distancia no le quita nada al girasol,\nsi el sol estuviera cerca lo quemaría,\ny desde lejos lo hace florecer.\n\nCuando llega la noche baja la cabeza,\nno de pena,\nsino para guardar lo que vio en el día.\nYo hago lo mismo con tu recuerdo,\nlo guardo con los ojos cerrados\nhasta que vuelve a amanecer.\n\nPor eso el girasol llora polen,\nporque ya no le cabe tanta luz.\nY por eso yo, cuando pienso en ti,\ntambién lloro un poco amarillo.",
+      "audio": "assets/audio/oda-al-girasol-feliz.mp3",
+      "splats": "assets/splats/oda-al-girasol-feliz.bin",
+      "image": "assets/img/oda-al-girasol-feliz.jpg"
+    },
+    {
+      "slug": "oda-con-la-lluvia",
+      "title": "Oda con la lluvia",
+      "text": "Y todavía te espero.\nAl escuchar la lluvia, increíblemente, aún te espero.\nNo tiene sentido, ni siquiera pasan pensamientos por mi mente, solo sé que aún te espero.\nCada gota resuena en mis recuerdos, tantas lluvias compartidas, ni siquiera son recuerdos que existan, muchos son creados por mi mente.\nEsa maraña de emociones y sentimientos que toman forma y personificación en sí mismas, más allá de mí, más allá de mi humanidad limitada. No creer en una conexión trascendental parece tan insípido, pero creer en ella parece tan ingenuo, qué ironía; sigue lloviendo y cada gota me recuerda que ya no estás, es hermoso.\n\nLa lluvia no sabe tu nombre, y por eso lo dice mejor que yo.\nCae sobre el techo, sobre los carros, sobre la gente que corre sin saber que está atravesando una oda.\nYo sí lo sé, y no corro.\n\nHubo un tiempo en que esperarte era esperar algo. Ahora esperar es el verbo entero, sin objeto, sin complemento, un animal que aprendió a vivir sin dueño y sigue sentado en la puerta por costumbre, por elegancia, porque irse sería admitir que alguna vez hubo alguien.\n\nY la crueldad exacta, la que me da risa: te extraño mejor de lo que te tuve. Cuando estabas, estaba ocupado estando. Ahora que no, tengo todo el tiempo del mundo para quererte bien.\n\nAsí que cae, lluvia, cae sobre lo que no pasó.\nQue el agua le ponga memoria a lo inventado.\n\nY cuando escampe —porque siempre escampa, esa es la única promesa que el cielo cumple— no voy a extrañarte a ti.\nVoy a extrañar la lluvia, que fue lo único que supo acompañarme sin pedirme que dejara de esperar.",
+      "audio": "assets/audio/oda-con-la-lluvia.mp3",
+      "splats": "assets/splats/oda-con-la-lluvia.bin",
+      "image": "assets/img/oda-con-la-lluvia.jpg"
+    },
+    {
+      "slug": "oda-al-milagro-de-amor",
+      "title": "Oda al milagro de amor",
+      "text": "Somos intensos.\nSomos fuego aún en el silencio.\nEs como ver una llama que no necesita oxígeno para mantenerse encendida.\nEsencialmente un milagro, o más que un milagro:\nuna imposibilidad probabilística encarnada en dos seres.\n\nUn milagro que sabe a paz.\nPaz de libertad.\nPaz de ser esclavo por voluntad.\nPaz de silencio.\n\nProbablemente un silencio eterno\nque solo la reencarnación de nuestras cenizas haga hablar.\nLas cenizas es lo que queda cuando el fuego\npor fin aprende a estarse quieto.\n\nPaz de no preguntar.\nPaz de saber sin que nadie confirme.\nPaz de la distancia que no se mide en kilómetros\nsino en todo lo que preferimos no gastar en palabras.\n\nHay amores que se dicen.\nEse ruido los consume.\nEl nuestro eligió otra economía:\narder despacio, no pedir nada,\nno tener que ser cierto para ser.\n\nPorque lo que no se nombra no se acaba.\nY lo que no se acaba\nno necesita que esté ocurriendo.",
+      "audio": "assets/audio/oda-al-milagro-de-amor.mp3",
+      "splats": "assets/splats/oda-al-milagro-de-amor.bin",
+      "image": "assets/img/oda-al-milagro-de-amor.jpg"
+    },
+    {
+      "slug": "oda-a-la-cura-de-la-envidia",
+      "title": "Oda a la cura de la envidia",
+      "text": "¿Dónde cabe la envidia cuando lo que me gobierna es conmoverme?\nConmoverme por las acciones hermosas que hace mi entorno,\n¿dónde cabe la envidia cuando todo es ternura?\nCuando lo que rebosa mi corazón\nes un globo rojo de ternura ensanchada a punto de explotar.\nMás qué admiración, siento redondo.\n\nRedondo, sí: como se siente lo que no tiene filo,\nlo que no busca dónde clavarse.\nLa envidia es puntiaguda, necesita un borde,\nun lugar exacto donde el otro termina y yo empiezo.\nHoy no encuentro ese borde.\n\nVi a un hombre inflar la llanta de una bicicleta ajena\ny se me fue la tarde entera en quererlo.\nOí a una mujer cantar afinado lo que yo canto mal,\ny no quise su voz: quise que siguiera.\nAhí está la cura, tan simple que da risa:\nquerer que siga.\n\nPorque la envidia le pide al otro que se detenga\npara alcanzarlo.\nLa ternura le pide al otro que no pare\npara mirarlo un rato más.",
+      "audio": "assets/audio/oda-a-la-cura-de-la-envidia.mp3",
+      "splats": "assets/splats/oda-a-la-cura-de-la-envidia.bin",
+      "image": "assets/img/oda-a-la-cura-de-la-envidia.jpg"
+    },
+    {
+      "slug": "oda-a-la-imposibilidad-de-amar-i",
+      "title": "Oda de la imposibilidad I",
+      "text": "No puedo amar, lo he intentado, pero\nno puedo amar: solo puedo ver mi no futuro contigo\nen mi presente que faltas.\nY no puedo amar, porque ya amé a tu ausencia,\ny ella no se va.\nNo puedo amar, porque solo me interesabas tú,\ntoda tú, ninguna otra;\nsimplicidad emana de las demás.\nNo puedo amar…\n\nY sin embargo mira lo que hago:\nlevanto un templo para decir que no hay dioses,\nescribo tu nombre en el reverso de la negación\ny lo llamo higiene, lo llamo cordura.\n\nNo puedo amar, repito,\ncomo quien sopla una vela para probar que no había fuego\ny descubre que la mano le queda tibia.\n\nTu ausencia tiene mejores modales que tú:\nno discute, no llega tarde, no cambia de opinión.\nPor eso la conservo. Por eso me cuesta\ndistinguir si te extraño a ti\no al lugar cómodo que dejaste\ndonde antes había riesgo.\n\nNo puedo amar, y lo digo en presente,\nque es el tiempo de los que todavía están ocupados.\nLos que ya no aman hablan en pasado\ny se les nota el descanso.\n\nAmar sería aceptar que otro rostro me interrumpa,\nque otra voz llegue sin tu permiso,\nque el mundo se atreva a seguir siendo variado\ndespués de ti.\n\nNo puedo. No quiero. Se parecen tanto\nque hace años dejé de auditarlos.\n\nY termino donde empecé, que es mi único talento:\nno puedo amar,\nlo cual, dicho con esta insistencia,\nes apenas otra manera de estar amando\na la única mujer que ya no necesita\nque yo la ame.",
+      "audio": "assets/audio/oda-a-la-imposibilidad-de-amar-i.mp3",
+      "splats": "assets/splats/oda-a-la-imposibilidad-de-amar-i.bin",
+      "image": "assets/img/oda-a-la-imposibilidad-de-amar-i.jpg"
+    },
+    {
+      "slug": "oda-a-la-imposibilidad-de-amar-ii",
+      "title": "Oda de la imposibilidad II",
+      "text": "No puedo amar, y quizás cuando vuelvas tampoco pueda amarte,\ny eso me rompe.\nNo puedo amar, porque ¿qué es el amor, después de todo?\nAmor, obsesión, olvido: en todas estás tú.\nLo abarcas todo, y por eso ya no puedo amar.\n\nTe volviste categoría.\nAntes eras una mujer con horarios y defectos,\nahora eres la unidad de medida\ncon que peso cualquier cosa que se me acerque.\nEs un ascenso, supongo.\nTambién es la forma más limpia de perderte:\nnadie abraza una medida.\n\nY si vuelves —lo he ensayado—\ntendré que presentarte a la versión tuya que me quedé,\nla que sabe exactamente qué decir,\nla que nunca tuvo sed ni fiebre ni mal día,\ny temo que te mire por encima del hombro,\nque te encuentre inexacta,\nque te reproche no parecerte a ti.\n\nEso es lo que me rompe: no tu ausencia,\nsino haber aprendido a vivir en ella tan bien\nque tu regreso sería una mudanza.\n\nDicen que el olvido cura.\nEl mío no olvida, solo ordena:\nguarda tus gestos en cajas, las etiqueta,\ny de vez en cuando abre una\ncon el pretexto de comprobar que ya no duele.\n\nPreguntaba qué es el amor.\nQuizá sea solamente esto:\nel único trabajo que uno hace mejor\ncuando ya no le pagan.\n\nNo puedo amar.\nPero mira con qué cuidado lo digo,\ncuánto tiempo le dedico a esa imposibilidad,\nqué bien la mantengo, qué puntual soy con ella.\n\nSi esto no es amor,\nal menos le lleva la contabilidad.",
+      "audio": "assets/audio/oda-a-la-imposibilidad-de-amar-ii.mp3",
+      "splats": "assets/splats/oda-a-la-imposibilidad-de-amar-ii.bin",
+      "image": "assets/img/oda-a-la-imposibilidad-de-amar-ii.jpg"
+    },
+    {
+      "slug": "oda-a-la-imposibilidad-de-amar-iii",
+      "title": "Oda de la imposibilidad III",
+      "text": "La obsesión es la secretaria del amor,\ny es la única disponible para quienes\nno tenemos acceso al edificio.\nNo, no, no puedo amar,\ny de tanto repetirlo te amaré\n—o debería plantearlo en pregunta,\nporque la respuesta no está en mi boca,\nni tampoco en la tuya;\nquizás en un beso sí lo esté.\n\nNo puedo amar, encontrándote en la azotea de mi mente,\ndonde tantas veces vimos el cielo.\n¿Quién amará si sigo en esa azotea?\nQuizás una estrella, o un ruiseñor que le canta a ella,\no una nube que la oculta para quedársela.\nSeré nube. Seré el que diga: no puedo amar,\nlo olvidaba por instantes.\nQuizás amar tus figuras sea lo más cercano al amor que esté.\n\nSeré nube, sí, pero de las lentas,\nde las que no llueven por no gastarse,\nde las que tapan la estrella y luego se justifican\ndiciendo que la protegían del viento.\nTodo secuestro bien contado se parece al cuidado.\n\nEn esa azotea hay una silla sola\ny yo la pongo para dos, por costumbre,\ny luego me siento en la vacía\npara saber desde dónde me mirabas.\nAhí es donde mejor te entiendo:\ncuando ocupo tu lado y hablo por ti,\ny me contestas siempre lo que necesito.\nNunca discutimos. Por eso no avanzamos.\n\nLa secretaria lleva bien la agenda:\nme despierta a la hora exacta de extrañarte,\narchiva las señales que no hubo,\ny al final del día me entrega un informe\ndonde todo se llama esperanza\nporque nadie en esa oficina\nse atreve a usar la otra palabra.\n\nEl beso que dices —el que tendría la respuesta—\nno lo pido. Lo temo.\nUn beso decide, y yo vivo de lo indeciso.\nSi me besas, se acaba el edificio entero:\nla secretaria queda sin trabajo,\nla azotea se vuelve un sitio con piso y sin cielo,\ny yo tendría que aprender el idioma difícil\nde amar a alguien que responde.\n\nAsí que me quedo en el pasillo,\nhaciendo antesala de mí mismo,\ndiciendo no puedo amar\ncon la aplicación del que espera ser desmentido.\n\nY si un día bajas y abres la puerta,\nno me creas nada de lo escrito:\ntodo esto fue el ruido que hace un hombre\nmientras sostiene, muy quieto,\nlo único que no supo soltar.",
+      "audio": "assets/audio/oda-a-la-imposibilidad-de-amar-iii.mp3",
+      "splats": "assets/splats/oda-a-la-imposibilidad-de-amar-iii.bin",
+      "image": "assets/img/oda-a-la-imposibilidad-de-amar-iii.jpg"
+    }
+  ]
+}

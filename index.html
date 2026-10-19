@@ -1,0 +1,87 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>El escritor de odas · Un girasol cobró consciencia</title>
+  <meta name="description" content="Odas de Iván Sarmiento, El escritor de odas. Lee y escucha «Un girasol cobró consciencia», un libro de ocho odas en acuarela y voz.">
+  <meta name="theme-color" content="#f6f1e7">
+  <meta property="og:title" content="Un girasol cobró consciencia — El escritor de odas">
+  <meta property="og:description" content="Ocho odas para leer, escuchar y ver pintarse en acuarela.">
+  <meta property="og:type" content="book">
+  <meta property="og:image" content="https://iasarmientoj.github.io/el-escritor-de-odas/assets/img/oda-al-girasol-feliz.jpg">
+  <meta property="og:url" content="https://iasarmientoj.github.io/el-escritor-de-odas/">
+  <link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400;1,500&family=EB+Garamond:ital,wght@0,400;0,500;1,400&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <main class="landing" id="landing">
+    <section class="author" aria-labelledby="pen-name">
+      <img class="portrait" src="assets/autor.jpg" alt="Iván Sarmiento" width="1400" height="1400">
+      <div class="author-text">
+        <p class="kicker">Iván Sarmiento</p>
+        <h1 id="pen-name">El escritor<br><em>de odas</em></h1>
+        <p class="bio">
+          Escribo odas a lo que casi nadie celebra: a un girasol que llora amarillo, a la lluvia
+          que acompaña sin preguntar, a la imposibilidad de amar.
+        </p>
+      </div>
+      <a class="btn contact-btn" data-gmail href="#" target="_blank" rel="noopener">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 6.5 12 13l9-6.5M4.5 5h15A1.5 1.5 0 0 1 21 6.5v11a1.5 1.5 0 0 1-1.5 1.5h-15A1.5 1.5 0 0 1 3 17.5v-11A1.5 1.5 0 0 1 4.5 5Z" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/></svg>
+        Escríbeme por Gmail
+      </a>
+    </section>
+
+    <section class="library" aria-labelledby="lib-title">
+      <header class="lib-head">
+        <h2 id="lib-title" class="section-label">Biblioteca</h2>
+        <a class="tiktok-link" data-tiktok href="#" hidden>TikTok</a>
+      </header>
+      <ul class="shelf-grid" id="shelf">
+        <li class="book-card">
+          <button class="book-3d" type="button" data-open aria-label="Abrir el libro Un girasol cobró consciencia">
+            <span class="book-cover">
+              <canvas class="cover-splats" aria-hidden="true"></canvas>
+              <span class="cover-title">Un girasol<br><em>cobró consciencia</em></span>
+              <span class="cover-author">El escritor de odas</span>
+            </span>
+            <span class="book-pages"></span>
+          </button>
+          <h3>Un girasol cobró consciencia</h3>
+          <p class="book-sub">8 odas · acuarela y voz</p>
+          <div class="card-actions">
+            <a class="btn small primary" data-buy href="#">Comprar</a>
+            <button class="btn small ghost" type="button" data-open>Leer</button>
+          </div>
+        </li>
+      </ul>
+    </section>
+  </main>
+
+  <div class="reader" id="reader" hidden>
+    <header class="reader-bar">
+      <button class="icon-btn" type="button" data-close aria-label="Volver a la biblioteca">←</button>
+      <p class="reader-title">Un girasol cobró consciencia</p>
+      <a class="btn small primary" data-buy href="#">Comprar</a>
+    </header>
+    <div class="stage" id="stage">
+      <button class="nav prev" type="button" data-prev aria-label="Página anterior">‹</button>
+      <div class="book" id="book"></div>
+      <button class="nav next" type="button" data-next aria-label="Página siguiente">›</button>
+    </div>
+    <footer class="player" id="player">
+      <button class="play" type="button" aria-label="Reproducir"><span></span></button>
+      <div class="track">
+        <p class="now">—</p>
+        <div class="bar" role="slider" aria-label="Progreso del audio" tabindex="0"><span class="fill"></span><span class="mark" title="La imagen queda completa aquí"></span></div>
+      </div>
+      <p class="time">0:00</p>
+    </footer>
+  </div>
+
+  <script type="module" src="js/main.js"></script>
+</body>
+</html>
