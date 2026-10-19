@@ -142,13 +142,16 @@ export class Reader {
   coverPage() {
     const page = this.newPage('p-cover');
     page.insertAdjacentHTML('beforeend', `
-      <span class="cover-title" style="z-index:3">Un girasol<br><em>cobró consciencia</em></span>
+      <span class="cover-title" style="z-index:3">El girasol<br><em>que cobró consciencia de sol</em></span>
       <span class="cover-author" style="z-index:3">El escritor de odas</span>
       <span class="tap">abrir</span>`);
+    const base = el('img', 'cover-base');
+    base.src = 'assets/img/oda-al-girasol-feliz.jpg'; base.alt = '';
+    page.appendChild(base);
     const p = { el: page, kind: 'cover' };
     this.addArt(p, COVER_SPLATS, () => {
-      const w = this.pw * 0.84;
-      return { x: this.pw * 0.08, y: this.ph - w * 4 / 3 - this.pw * 0.01, w };
+      const w = this.pw * 0.74;
+      return { x: this.pw * 0.13, y: this.ph - w * 4 / 3 - this.pw * 0.01, w };
     }, { cover: true });
     return p;
   }
@@ -304,7 +307,7 @@ export class Reader {
   }
 
   // Móvil: tantas páginas como haga falta; la acuarela va en la primera,
-  // para que se pinte mientras se escucha la voz.
+  // para que se vea mientras se escucha el audio.
   paginateSingle(poem, k) {
     const fs = Math.max(14.5, Math.min(17.5, this.pw * 0.043));
     const units = unitsOf(poem.text);
@@ -331,12 +334,11 @@ export class Reader {
     artEl.appendChild(hint);
     p.hint = hint;
     p.hintPoem = k;
-    if (!supported) {
-      const img = el('img', 'fallback-img');
-      img.src = poem.image; img.alt = poem.title;
-      artEl.prepend(img);
-      return;
-    }
+    const img = el('img', 'art-base');
+    img.src = poem.image; img.alt = poem.title;
+    if (!supported) img.classList.add('full');
+    artEl.prepend(img);
+    if (!supported) return;
     this.addArt(p, poem.splats, () => {
       let x = 0, y = 0, n = artEl;
       while (n && n !== p.el) { x += n.offsetLeft; y += n.offsetTop; n = n.offsetParent; }
@@ -353,13 +355,8 @@ export class Reader {
   ensureView(p) {
     if (!p.art || p.view || !supported) return;
     const a = p.art;
-    p.view = createView(a.canvas, a.url, {
-      getRect: a.rect,
-      ghost: a.cover ? 0 : 0.07,
-      initial: 0,
-      speed: a.cover ? 0.9 : 2.2,
-      target: a.cover ? () => 1 : () => this.progressFor(a.poem),
-    });
+    // la imagen ya está completa; los splats solo reaccionan al puntero
+    p.view = createView(a.canvas, a.url, { getRect: a.rect, initial: 1, target: () => 1 });
   }
 
   // ------------------------------------------------------------- montaje
@@ -554,7 +551,7 @@ export class Reader {
     this.updateBar();
     if ('mediaSession' in navigator) {
       navigator.mediaSession.metadata = new MediaMetadata({
-        title: poem.title, artist: 'El escritor de odas', album: 'Un girasol cobró consciencia',
+        title: poem.title, artist: 'El escritor de odas', album: 'El girasol que cobró consciencia de sol',
         artwork: [{ src: poem.image, sizes: '600x800', type: 'image/jpeg' }],
       });
     }

@@ -1,4 +1,4 @@
-# El escritor de odas: web del libro «Un girasol cobró consciencia»
+# El escritor de odas: web del libro «El girasol que cobró consciencia de sol»
 
 Sitio estático (HTML + JS, sin compilación) listo para GitHub Pages.
 

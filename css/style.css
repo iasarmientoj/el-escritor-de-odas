@@ -116,13 +116,14 @@ h1 em { color: #e9b84a; font-weight: 400; }
 .section-label::after { content: ''; flex: 1; height: 1px; background: var(--line); }
 .shelf-grid {
   list-style: none; margin: 0; padding: clamp(18px, 3vh, 30px) 4px 24px;
-  display: grid; grid-template-columns: repeat(2, minmax(0, 1fr));
+  display: grid; grid-template-columns: repeat(3, minmax(0, var(--card-w))); justify-content: center; align-content: start;
+  --card-w: calc((100svh - 2 * var(--gap) - 60px) / 2 * .52);
   gap: clamp(22px, 3.2vh, 40px) clamp(14px, 1.6vw, 26px);
   overflow-y: auto; min-height: 0; flex: 1;
   scrollbar-width: thin; scrollbar-color: rgba(42,37,32,.25) transparent;
   mask-image: linear-gradient(to bottom, transparent 0, #000 14px, #000 calc(100% - 28px), transparent);
 }
-.book-card { display: flex; flex-direction: column; min-width: 0; width: 100%; max-width: calc((100svh - 2 * var(--gap) - 60px) / 2 * .52); justify-self: center; }
+.book-card { display: flex; flex-direction: column; min-width: 0; }
 .book-card h3 {
   font-family: var(--display); font-weight: 500; font-size: clamp(1rem, 1.15vw, 1.2rem); line-height: 1.1;
   margin: .9em 0 .15em;
@@ -152,12 +153,14 @@ h1 em { color: #e9b84a; font-weight: 400; }
 }
 .book-3d:hover .book-cover { transform: rotateY(-22deg); }
 .book-3d:hover .book-pages { transform: rotateY(-17deg) translateZ(-6px); }
-.cover-splats { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+.cover-splats { position: absolute; inset: 0; width: 100%; height: 100%; display: block; mix-blend-mode: multiply; }
+/* imagen original al 50 % bajo los splats: mismo rectángulo que en js (x 13 %, ancho 74 %) */
+.cover-base { position: absolute; left: 13%; width: 74%; bottom: .75%; aspect-ratio: 3 / 4; height: auto; opacity: .5; mix-blend-mode: multiply; pointer-events: none; }
 .cover-title {
   position: absolute; left: 0; right: 0; top: 7%; text-align: center; pointer-events: none; z-index: 3;
   font-family: var(--display); font-weight: 500; font-size: 9.5cqw; line-height: 1; color: var(--ink);
 }
-.cover-title em { display: block; font-weight: 400; color: var(--sun-deep); font-size: .82em; margin-top: .12em; }
+.cover-title em { display: block; font-weight: 400; color: var(--sun-deep); font-size: .62em; margin-top: .18em; line-height: 1.05; white-space: nowrap; }
 .cover-author {
   position: absolute; left: 0; right: 0; bottom: 5.5%; text-align: center; pointer-events: none; z-index: 3;
   font-size: 4.3cqw; letter-spacing: .3em; text-transform: uppercase; color: var(--ink-2);
@@ -214,7 +217,7 @@ h1 em { color: #e9b84a; font-weight: 400; }
 }
 .page .inner { position: absolute; inset: 7% 9% 8.5%; }
 .page .folio { position: absolute; bottom: 3.2%; left: 0; right: 0; text-align: center; font-size: calc(var(--pw) * .026); color: var(--muted); letter-spacing: .1em; }
-.page canvas.splat-layer { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; z-index: 2; }
+.page canvas.splat-layer { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; z-index: 2; mix-blend-mode: multiply; }
 
 /* modo libro abierto (escritorio) */
 .book.spread .leaf {
@@ -301,7 +304,8 @@ h1 em { color: #e9b84a; font-weight: 400; }
 .flow .listen i::before { content: ''; border-left: .9em solid var(--ink); border-top: .55em solid transparent; border-bottom: .55em solid transparent; margin-left: .2em; }
 .flow .listen:hover i { border-color: var(--sun-deep); }
 .flow .listen.hide { opacity: 0; pointer-events: none; }
-.art img.fallback-img { width: 100%; height: 100%; object-fit: contain; mix-blend-mode: multiply; }
+.art .art-base { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; mix-blend-mode: multiply; opacity: .5; pointer-events: none; }
+.art .art-base.full { opacity: 1; }
 
 /* reproductor */
 .player {
@@ -337,7 +341,6 @@ h1 em { color: #e9b84a; font-weight: 400; }
   h1 { font-size: 2.3rem; }
   .bio { font-size: .92rem; }
   .shelf-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); overflow: visible; mask-image: none; }
-  .book-card { max-width: none; }
   .nav { display: none; }
   .reader-title { font-size: 1rem; }
 }

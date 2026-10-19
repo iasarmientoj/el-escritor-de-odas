@@ -15,7 +15,7 @@ export const CONFIG = {
 
 export function buyHref() {
   if (CONFIG.buyUrl) return CONFIG.buyUrl;
-  const subject = encodeURIComponent('Quiero el libro «Un girasol cobró consciencia»');
-  const body = encodeURIComponent('Hola, Iván:\n\nMe gustaría comprar el libro «Un girasol cobró consciencia».\n\n');
+  const subject = encodeURIComponent('Quiero el libro «El girasol que cobró consciencia de sol»');
+  const body = encodeURIComponent('Hola, Iván:\n\nMe gustaría comprar el libro «El girasol que cobró consciencia de sol».\n\n');
   return `mailto:${CONFIG.email}?subject=${subject}&body=${body}`;
 }

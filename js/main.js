@@ -24,7 +24,7 @@ $$('[data-gmail]').forEach(a => {
 
 // biblioteca: el resto de la rejilla son libros por venir
 const shelf = $('#shelf');
-for (let i = 2; i <= 4; i++) {
+for (let i = 2; i <= 6; i++) {
   const li = document.createElement('li');
   li.className = 'book-card soon';
   li.setAttribute('aria-hidden', 'true');
@@ -44,11 +44,14 @@ if (supported) {
   coverView = createView(coverCanvas, 'assets/splats/oda-al-girasol-feliz.bin', {
     getRect: () => {
       const w = coverCanvas.clientWidth, h = coverCanvas.clientHeight;
-      const iw = w * 0.84;
-      return { x: w * 0.08, y: h - iw * 4 / 3 - w * 0.01, w: iw };
+      const iw = w * 0.74;
+      return { x: w * 0.13, y: h - iw * 4 / 3 - w * 0.01, w: iw };
     },
-    target: () => 1, initial: 0, speed: 0.75,
+    target: () => 1, initial: 1,
   });
+  const base = new Image();
+  base.src = 'assets/img/oda-al-girasol-feliz.jpg'; base.alt = ''; base.className = 'cover-base';
+  coverCanvas.before(base);
   setVisible(coverView, true);
   window.addEventListener('pointermove', e => {
     const b = coverCanvas.getBoundingClientRect();

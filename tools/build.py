@@ -216,7 +216,7 @@ def main():
 
     (WEB / "data" / "poems.json").write_text(
         json.dumps({"book": {
-            "title": "Un girasol cobró consciencia",
+            "title": "El girasol que cobró consciencia de sol",
             "author": "Iván Sarmiento",
             "pen": "El escritor de odas",
         }, "poems": poems}, ensure_ascii=False, indent=2), encoding="utf-8")

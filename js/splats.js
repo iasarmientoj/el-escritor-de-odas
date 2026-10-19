@@ -22,8 +22,6 @@ void main() {
   vec2 dir = aHome - aFly.xy;
   vec2 perp = vec2(-dir.y, dir.x);
   vec2 p = mix(aFly.xy, aHome, k) + perp * sin(k * 3.14159) * (seed - 0.5) * 0.7;
-  // la acuarela "respira"
-  p += vec2(sin(uTime * 0.7 + seed * 40.0), cos(uTime * 0.6 + seed * 31.0)) * 0.0011 * k;
   p += aOff * k;
   float s = uRect.z;
   vec2 sz = aShape.xy * s;
@@ -278,7 +276,8 @@ export function createView(canvas, url, opts = {}) {
     mouse: { x: 0, y: 0, vx: 0, vy: 0, active: false, lastT: 0 },
     dirtyFrame: true, ready: null,
   };
-  view.ready = loadSplats(url).then(set => { view.set = set; view.dirtyFrame = true; return set; });
+  // al terminar de cargar, reanudar el bucle (puede haberse detenido mientras no había nada que pintar)
+  view.ready = loadSplats(url).then(set => { view.set = set; view.dirtyFrame = true; ensureLoop(); return set; });
   views.add(view);
   ensureLoop();
   return view;
