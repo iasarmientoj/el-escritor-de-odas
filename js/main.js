@@ -1,5 +1,5 @@
 import { CONFIG, buyHref } from './config.js';
-import { createView, destroyView, setVisible, pointer, transition, supported } from './splats.js';
+import { createView, destroyView, setVisible, pointer, wipe, supported } from './splats.js';
 import { Reader } from './book.js';
 
 const $ = (s, r = document) => r.querySelector(s);
@@ -102,7 +102,7 @@ let opening = false;
 async function openBook() {
   cameFromLanding = true;
   const calm = matchMedia('(prefers-reduced-motion: reduce)').matches;
-  if (!coverView || !coverView.set || calm) { location.hash = 'libro'; return; }
+  if (!coverView || !coverView.set || calm || !reader) { location.hash = 'libro'; return; }
   if (opening) return;
   opening = true;
   const b = coverCanvas.getBoundingClientRect();
@@ -112,15 +112,21 @@ async function openBook() {
   layer.className = 'burst-layer';
   document.body.appendChild(layer);
   const fx = createView(layer, 'assets/splats/oda-al-girasol-feliz.bin', {
-    getRect: () => rect, target: () => 1, initial: 1, maxDpr: 0.6,
+    getRect: () => rect, target: () => 1, initial: 1, maxDpr: 0.75, crisp: false,
   });
   await fx.ready;
-  coverCanvas.style.visibility = 'hidden';
-  // explotan, cubren la pantalla (ahí se abre el lector, ya preparado) y se desvanecen
-  await transition(fx, 2100, () => { location.hash = 'libro'; });
+  // El lector (ya preparado) aparece por arriba de la línea de pinceladas que baja;
+  // por debajo sigue la landing hasta que la línea llega al borde inferior.
+  readerEl.style.clipPath = 'inset(0 0 100% 0)';
+  readerEl.style.opacity = '1';
+  location.hash = 'libro';
+  await wipe(fx, 1700, (t, y) => {
+    readerEl.style.clipPath = `inset(0 0 ${Math.max(0, innerHeight - y)}px 0)`;
+  });
+  readerEl.style.clipPath = '';
+  readerEl.style.opacity = '';
   destroyView(fx);
   layer.remove();
-  coverCanvas.style.visibility = '';
   opening = false;
 }
 $$('[data-open]').forEach(b => b.addEventListener('click', openBook));

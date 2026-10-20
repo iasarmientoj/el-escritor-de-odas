@@ -161,7 +161,7 @@ h1 em { color: #e9b84a; font-weight: 400; }
 .book-3d:hover .book-pages { transform: rotateY(-17deg) translateZ(-6px); }
 .cover-splats { position: absolute; inset: 0; width: 100%; height: 100%; display: block; mix-blend-mode: multiply; }
 /* imagen original al 50 % bajo los splats: mismo rectángulo que en js (x 13 %, ancho 74 %) */
-.cover-base { position: absolute; left: 13%; width: 74%; bottom: 7.5%; aspect-ratio: 3 / 4; height: auto; opacity: .5; mix-blend-mode: multiply; pointer-events: none; }
+.cover-base { position: absolute; left: 13%; width: 74%; bottom: 7.5%; aspect-ratio: 3 / 4; height: auto; opacity: 1; mix-blend-mode: multiply; pointer-events: none; }
 .cover-title {
   position: absolute; left: 0; right: 0; top: 7%; text-align: center; pointer-events: none; z-index: 3;
   font-family: var(--display); font-weight: 500; font-size: 9.5cqw; line-height: 1; color: var(--ink);
@@ -237,8 +237,15 @@ h1 em { color: #e9b84a; font-weight: 400; }
 .book.spread .leaf.flipped { transform: rotateY(-180deg); }
 .book.spread .face { position: absolute; inset: 0; backface-visibility: hidden; -webkit-backface-visibility: hidden; }
 .book.spread .face.back { transform: rotateY(180deg); }
-.book.spread .face.front .page { box-shadow: inset 14px 0 22px -14px rgba(60,40,10,.28); border-radius: 0 3px 3px 0; }
-.book.spread .face.back .page { box-shadow: inset -14px 0 22px -14px rgba(60,40,10,.28); border-radius: 3px 0 0 3px; }
+.book.spread .face.front .page { border-radius: 0 3px 3px 0; }
+.book.spread .face.back .page { border-radius: 3px 0 0 3px; }
+.book.spread .face .page:not(.p-cover)::before {
+  content: ''; position: absolute; top: 0; bottom: 0; width: 7%; pointer-events: none; z-index: 1;
+  -webkit-mask-image: linear-gradient(to bottom, #000 0, rgba(0,0,0,.25) 18%, transparent 32%, transparent 68%, rgba(0,0,0,.25) 82%, #000 100%);
+          mask-image: linear-gradient(to bottom, #000 0, rgba(0,0,0,.25) 18%, transparent 32%, transparent 68%, rgba(0,0,0,.25) 82%, #000 100%);
+}
+.book.spread .face.front .page:not(.p-cover)::before { left: 0; background: linear-gradient(90deg, rgba(60,40,10,.26), transparent); }
+.book.spread .face.back .page:not(.p-cover)::before { right: 0; background: linear-gradient(270deg, rgba(60,40,10,.26), transparent); }
 .book.spread::before {
   content: ''; position: absolute; inset: 0; border-radius: 4px; pointer-events: none;
   box-shadow: 0 40px 80px -30px rgba(0,0,0,.8), 0 10px 30px -10px rgba(0,0,0,.6);
@@ -295,9 +302,12 @@ h1 em { color: #e9b84a; font-weight: 400; }
 .flow .num { margin: 0; text-align: left; font-size: .72em; letter-spacing: .3em; color: var(--muted); }
 .flow h2 { font-family: var(--display); font-weight: 500; font-style: italic; font-size: 1.75em; line-height: 1.05; margin: .15em 0 .9em; color: var(--ink); }
 .flow .st { margin: 0 0 .85em; }
-.flow .ln { padding-left: 1.1em; text-indent: -1.1em; }
-.flow .pr { text-align: justify; text-indent: 1.2em; padding-left: 0; hyphens: auto; }
-.flow .pr.cont { text-indent: 0; }
+.flow .ln { padding-left: 0; text-indent: 0; text-align: left; hyphens: manual; }   /* versos: sin justificar */
+.flow .pr { text-align: justify; text-indent: 0; padding-left: 0; hyphens: auto; }
+/* sin sangría: los párrafos en prosa se separan con un poco de aire */
+.flow .ln + .pr, .flow .pr + .ln { margin-top: .45em; }
+.flow .pr.cont { margin-top: 0; }
+
 .flow .spacer { float: right; width: 1px; }
 .flow .art { float: right; clear: right; position: relative; margin-left: 1em; }
 .flow .listen {
@@ -313,7 +323,7 @@ h1 em { color: #e9b84a; font-weight: 400; }
 .flow .listen i::before { content: ''; border-left: .9em solid var(--ink); border-top: .55em solid transparent; border-bottom: .55em solid transparent; margin-left: .2em; }
 .flow .listen:hover i { border-color: var(--sun-deep); }
 .flow .listen.hide { opacity: 0; pointer-events: none; }
-.art .art-base { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; mix-blend-mode: multiply; opacity: .5; pointer-events: none; }
+.art .art-base { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; max-width: none; mix-blend-mode: multiply; opacity: 1; pointer-events: none; }
 .art .art-base.full { opacity: 1; }
 
 /* reproductor */
@@ -336,6 +346,101 @@ h1 em { color: #e9b84a; font-weight: 400; }
 .bar .fill::after { content: ''; position: absolute; right: -5px; top: -4px; width: 10px; height: 10px; border-radius: 50%; background: var(--sun); }
 .bar .mark { position: absolute; left: 50%; top: 5px; width: 1px; height: 8px; background: rgba(239,230,214,.4); }
 .time { margin: 0; font-variant-numeric: tabular-nums; font-size: .95rem; color: #bfb29e; min-width: 3.2em; text-align: right; }
+
+/* ------------------------------------------------------------ lector: interfaz flotante */
+.reader { display: block; }
+.reader .stage { position: absolute; inset: 0; }
+.reader-bar {
+  position: absolute; z-index: 6; top: 0; left: 0; right: 0; pointer-events: none;
+  justify-content: space-between; padding: 14px 18px; padding-top: max(14px, env(safe-area-inset-top));
+}
+.reader-bar > * { pointer-events: auto; }
+.reader-title {
+  flex: 0 1 auto; max-width: 52vw; padding: .32em 1.1em; border-radius: 999px;
+  background: rgba(20, 17, 14, .42); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+  border: 1px solid rgba(239, 230, 214, .1);
+}
+.icon-btn { background: rgba(20, 17, 14, .42); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); }
+.player {
+  position: absolute; z-index: 6; left: 50%; bottom: max(14px, env(safe-area-inset-bottom));
+  transform: translateX(-50%); width: min(620px, calc(100% - 28px)); margin: 0;
+  padding: 7px 20px 7px 7px; gap: 12px; border-radius: 999px;
+  background: rgba(20, 17, 14, .55); backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px);
+  border: 1px solid rgba(239, 230, 214, .12); box-shadow: 0 14px 36px -14px rgba(0, 0, 0, .7);
+}
+.player .play { width: 40px; height: 40px; }
+.player .now { margin: 0 0 1px; font-size: .95rem; }
+.reader-bar, .player, .nav { transition: opacity .6s ease; }
+.reader.idle .reader-bar, .reader.idle .player, .reader.idle .nav { opacity: 0; }
+.reader.idle .player.off { opacity: 0; }
+
+/* ------------------------------------------------------------ lector: contraluz y flotación */
+.reader { background: radial-gradient(ellipse at 50% 44%, #4b4133 0%, #2c261e 52%, #17140f 100%); }
+.stage::before {
+  content: ''; position: absolute; left: 50%; top: 46%; width: 125vmin; height: 125vmin;
+  transform: translate(-50%, -50%); pointer-events: none; opacity: .8;
+  background: radial-gradient(circle, rgba(255, 206, 120, .62) 0%, rgba(240, 156, 60, .26) 24%, rgba(160, 80, 25, .08) 42%, rgba(120, 60, 20, 0) 62%);
+  transition: opacity 1.2s ease;
+}
+.stage.at-cover::before { opacity: 1; }
+.stage::after {
+  content: ''; position: absolute; inset: 0; pointer-events: none; z-index: 5;
+  background: var(--grain), radial-gradient(ellipse at 50% 50%, transparent 55%, rgba(0, 0, 0, .55) 100%);
+  opacity: .9; mix-blend-mode: overlay;
+}
+.book-float { position: relative; z-index: 1; transition: scale 1.1s cubic-bezier(.4,.1,.2,1); }
+.stage.at-cover .book-float { scale: .8; }
+.book-float::after {
+  content: ''; position: absolute; left: 50%; bottom: -54px; width: 44%; height: 40px;
+  transform: translateX(-50%); pointer-events: none; opacity: 0;
+  background: radial-gradient(ellipse at center, rgba(0, 0, 0, .7), transparent 70%); filter: blur(8px);
+  transition: opacity 1s ease;
+}
+.stage.at-cover .book-float { animation: float 7s ease-in-out infinite; }
+.stage.at-cover .book-float::after { opacity: 1; animation: floor-shadow 7s ease-in-out infinite; }
+@keyframes float { 0%, 100% { transform: translateY(0) rotate(-.35deg); } 50% { transform: translateY(-14px) rotate(.35deg); } }
+@keyframes floor-shadow { 0%, 100% { transform: translateX(-50%) scale(1); opacity: 1; } 50% { transform: translateX(-50%) scale(.82); opacity: .6; } }
+/* la portada iluminada desde atrás: borde que brilla, brillo que la cruza y bordes envejecidos */
+.stage.at-cover .p-cover {
+  box-shadow: 0 0 0 1px rgba(255, 226, 170, .6), 0 0 34px 4px rgba(255, 200, 110, .55), 0 0 110px 26px rgba(250, 160, 60, .32), 0 60px 90px -30px rgba(0, 0, 0, .85);
+  transition: box-shadow 1.2s ease;
+}
+.p-cover::before {
+  content: ''; position: absolute; inset: 0; z-index: 4; pointer-events: none; mix-blend-mode: multiply;
+  background: radial-gradient(ellipse at 50% 38%, transparent 52%, rgba(96, 58, 22, .26) 100%);
+}
+.p-cover::after {
+  content: ''; position: absolute; inset: -20%; z-index: 4; pointer-events: none; mix-blend-mode: soft-light;
+  background: linear-gradient(112deg, transparent 38%, rgba(255, 238, 205, .55) 50%, transparent 62%);
+  animation: sheen 7s ease-in-out infinite;
+}
+@keyframes sheen { 0%, 100% { transform: translateX(-28%); opacity: .2; } 50% { transform: translateX(28%); opacity: .9; } }
+
+/* ------------------------------------------------------------ lector: acuarela flotante */
+.player.off { opacity: 0 !important; visibility: hidden; pointer-events: none; }
+.flow .spacer.left { float: right; width: 1px; }
+.flow .spacer.right { float: left; width: 1px; }
+.flow .art-shape { shape-margin: 3em; }
+.flow .art-shape.left { float: right; clear: right; }
+.flow .art-shape.right { float: left; clear: left; }
+.spread-art {
+  position: absolute; z-index: 60; pointer-events: none; opacity: 0;
+  mix-blend-mode: multiply;   /* lo casi blanco desaparece sobre el papel */
+  transition: opacity .3s ease;
+  animation: art-float 7s ease-in-out infinite;
+  will-change: transform;
+}
+.spread-art.on { opacity: 1; transition: opacity .8s ease; }
+/* la sombra la proyecta la silueta del dibujo, no un rectángulo */
+.spread-art .art-base { position: absolute; opacity: 1; }
+.spread-art canvas.splat-layer { position: absolute; inset: 0; width: 100%; height: 100%; }
+@keyframes art-float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-12px); } }
+
+/* las páginas también reciben el contraluz (sin que el libro se mueva) */
+.stage:not(.at-cover) .book.spread::before {
+  box-shadow: 0 0 0 1px rgba(255, 222, 165, .28), 0 0 46px 6px rgba(255, 192, 104, .32),
+              0 0 140px 34px rgba(240, 150, 60, .16), 0 40px 80px -30px rgba(0, 0, 0, .8);
+}
 
 /* ------------------------------------------------------------ responsive */
 @media (max-width: 860px) {

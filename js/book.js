@@ -5,6 +5,7 @@ import { CONFIG, buyHref } from './config.js';
 const ROMAN = ['I', 'II', 'III', 'IV', 'V', 'VI', 'VII', 'VIII', 'IX', 'X', 'XI', 'XII'];
 const COVER_SPLATS = 'assets/splats/oda-al-girasol-feliz.bin';
 const FLIP_MS = 1000;
+const FS_REF = 'oda-a-la-imposibilidad-de-amar-iii';   // oda que fija el tamaño de letra
 
 const el = (tag, cls, html) => {
   const e = document.createElement(tag);
@@ -56,6 +57,7 @@ export class Reader {
     this.root.hidden = false;
     document.body.style.overflow = 'hidden';
     requestAnimationFrame(() => this.root.classList.add('show'));
+    if (this.wake) this.wake();
     if (!this.pages.length || this.stale) { this.build(); this.stale = false; }
     const idx = slug ? this.poems.findIndex(p => p.slug === slug) : -1;
     if (idx >= 0) this.goToPoem(idx, first);
@@ -86,6 +88,7 @@ export class Reader {
       this.root.hidden = true;
       document.body.style.overflow = '';
       this.pages.forEach(p => p.view && setVisible(p.view, false));
+      if (this.sArt && this.sArt.view) setVisible(this.sArt.view, false);
     }, 450);
   }
 
@@ -95,11 +98,11 @@ export class Reader {
     const desktop = sw >= 720 && sw > sh * 1.12;
     let pw, ph;
     if (desktop) {
-      const availW = sw - 120, availH = sh - 24;
+      const availW = sw - 120, availH = sh - 40;
       pw = Math.floor(Math.min(availW / 2, availH * 0.75));
       ph = Math.floor(pw * 4 / 3);
     } else {
-      const availW = sw - 24, availH = sh - 16;
+      const availW = sw - 24, availH = sh - 96;
       pw = Math.floor(Math.min(availW, 560, availH / 1.2));
       ph = Math.floor(Math.min(availH, pw * 1.72));
     }
@@ -109,6 +112,9 @@ export class Reader {
   build() {
     const anchor = this.anchor();
     this.pages.forEach(p => p.view && destroyView(p.view));
+    if (this.sArt && this.sArt.view) destroyView(this.sArt.view);
+    this.sArt = null;
+    this.artGeoms = [];
     this.pages = [];
     const { mode, pw, ph } = this.measure();
     this.mode = mode; this.pw = pw; this.ph = ph;
@@ -131,6 +137,15 @@ export class Reader {
     const indexPage = this.indexPage();
     this.pages.push(indexPage);
     this.poemStart = [];
+    // Un solo tamaño de letra para todas las odas: el que necesita la más larga
+    // («Imposibilidad III»), para que el libro se vea parejo.
+    this.fixedFs = null;
+    if (mode === 'spread') {
+      const ref = Math.max(0, this.poems.findIndex(p => p.slug === FS_REF));
+      const probe = this.paginateSpread(this.poems[ref], ref);
+      this.fixedFs = probe.fs;
+      this.artGeoms = [];
+    }
     this.poems.forEach((poem, k) => {
       this.poemStart[k] = this.pages.length;
       const pages = mode === 'spread' ? this.paginateSpread(poem, k) : this.paginateSingle(poem, k);
@@ -202,12 +217,14 @@ export class Reader {
 
   endPage() {
     const page = this.newPage('p-end');
-    const tik = CONFIG.tiktokUrl ? `<a href="${CONFIG.tiktokUrl}" target="_blank" rel="noopener">TikTok</a>` : '';
+    const tik = CONFIG.tiktokUrl
+      ? `<a class="btn ghost end-tiktok" href="${CONFIG.tiktokUrl}" target="_blank" rel="noopener">Sígueme en TikTok</a>` : '';
     page.querySelector('.inner').innerHTML = `
       <h2>Gracias por leer</h2>
       <p>Si alguna oda se quedó contigo, llévate el libro o escríbeme.</p>
       <a class="btn primary" href="${buyHref()}">Comprar el libro</a>
-      <p class="contact"><a href="mailto:${CONFIG.email}">${CONFIG.email}</a>${tik}</p>`;
+      ${tik}
+      <p class="contact"><a href="mailto:${CONFIG.email}">${CONFIG.email}</a></p>`;
     return { el: page, kind: 'end' };
   }
 
@@ -238,11 +255,11 @@ export class Reader {
   }
 
   // Coloca unidades (versos / pausas) mientras quepan. Devuelve el índice siguiente.
-  fill(flow, units, i, limit) {
+  fill(flow, units, i, limit, stop = Infinity) {
     const fits = n => n.offsetTop + n.offsetHeight <= limit + 0.5;
     let st = null;
     while (i < units.length && units[i].t === 'br') i++;
-    for (; i < units.length; i++) {
+    for (; i < units.length && i < stop; i++) {
       const u = units[i];
       if (u.t === 'br') { st = null; continue; }
       if (!st) { st = el('div', 'st'); flow.appendChild(st); }
@@ -289,37 +306,157 @@ export class Reader {
     return page;
   }
 
-  // Escritorio: cada oda ocupa exactamente un pliego (izquierda texto, derecha texto + acuarela).
-  // Se busca la acuarela más grande posible reduciendo un poco la letra; si no cabe,
-  // se reduce la letra hasta que todo entre con la acuarela al 60 %.
+  // Escritorio: la acuarela flota en el centro del pliego, sobre el lomo, y la oda se
+  // reparte en la página izquierda y la derecha rodeando la silueta del dibujo.
+  // Para cada tamaño de acuarela se busca la letra más grande que cabe y gana la
+  // combinación con mejor puntuación (primero letra legible, luego acuarela grande).
   paginateSpread(poem, k) {
-    const max = this.pw * 0.037, min = this.pw * 0.019;
-    const attempt = (fs, art) => {
+    const max = this.pw * 0.037, min = this.pw * 0.02;
+    const attempt = (fs, wf, balance = false) => {
+      const g = this.artGeom(wf);
       const units = unitsOf(poem.text);
-      const a = this.makePoemPage(k);
-      const fa = this.flowFor(a, fs, poem, k, true, 0);
-      const j = this.fill(fa.flow, units, 0, fa.limit);
+      let a = this.makePoemPage(k);
+      let fa = this.flowSpread(a, fs, poem, k, true, 'left', g);
+      let j = this.fill(fa.flow, units.slice(), 0, fa.limit);
+      // repartir la oda entre las dos páginas: cortar en la pausa entre estrofas
+      // más cercana a la mitad (sin pasar de lo que cabe a la izquierda)
+      const lines = units.map((u, i) => u.t === 'ln' ? i : -1).filter(i => i >= 0);
+      const half = lines[Math.floor(lines.length / 2)];
+      let cut = -1;
+      if (balance) units.forEach((u, i) => { if (u.t === 'br' && i <= j && (cut < 0 || Math.abs(i - half) < Math.abs(cut - half))) cut = i; });
+      a.remove();
+      a = this.makePoemPage(k);
+      fa = this.flowSpread(a, fs, poem, k, true, 'left', g);
+      j = this.fill(fa.flow, units, 0, fa.limit, cut > 0 ? cut : Infinity);
       const b = this.newPage('p-poem');
       this.meas.appendChild(b);
-      const rest = units.slice(j).some(u => u.t === 'ln');
-      const fb = this.flowFor(b, fs, poem, k, false, rest ? art : 0.96);
-      const j2 = rest ? this.fill(fb.flow, units, j, fb.limit) : units.length;
-      return { a, b, artEl: fb.artEl, ok: j2 >= units.length };
+      const fb = this.flowSpread(b, fs, poem, k, false, 'right', g);
+      const j2 = this.fill(fb.flow, units, j, fb.limit);
+      return { a, b, g, fs, ok: !units.slice(j2).some(u => u.t === 'ln') };
     };
-    let r = null;
-    search:
-    for (const art of [0.96, 0.86, 0.76, 0.68]) {
-      for (let fs = max; fs >= max * 0.8; fs *= 0.965) {
-        r = attempt(fs, art);
-        if (r.ok) break search;
+    let best = null, bestScore = -1;
+    // con tamaño fijo: solo se elige la acuarela más grande que deja caber la oda
+    if (this.fixedFs) {
+      // primero repartiendo la oda entre las dos páginas; si no cabe, sin repartir
+      for (const balance of [true, false]) {
+        for (const wf of [0.86, 0.78, 0.7, 0.62, 0.54, 0.48, 0.42]) {
+          const r = attempt(this.fixedFs, wf, balance);
+          if (r.ok) { best = r; break; }
+        }
+        if (best) break;
       }
     }
-    if (!r.ok) for (let fs = max; fs >= min; fs *= 0.965) { r = attempt(fs, 0.6); if (r.ok) break; }
-    r.a.remove(); r.b.remove();
-    const pa = { el: r.a, kind: 'poem', poem: k };
-    const pb = { el: r.b, kind: 'poem', poem: k };
-    this.attachArt(pb, r.artEl, poem, k);
-    return [pa, pb];
+    if (!best) for (const wf of [0.86, 0.78, 0.7, 0.62, 0.54, 0.48, 0.42]) {
+      let ok = null;
+      const first = attempt(max, wf);
+      if (first.ok) ok = first;
+      else {
+        let lo = min, hi = max;
+        for (let it = 0; it < 7; it++) {
+          const mid = (lo + hi) / 2;
+          const r = attempt(mid, wf);
+          if (r.ok) { ok = r; lo = mid; } else hi = mid;
+        }
+      }
+      if (ok) {
+        const score = (ok.fs / max) * 2.5 + wf * 0.6;
+        if (score > bestScore) { bestScore = score; best = ok; }
+      }
+    }
+    if (!best) best = attempt(min, 0.54);
+    best.a.remove(); best.b.remove();
+    this.artGeoms[k] = best.g;
+    const out = [{ el: best.a, kind: 'poem', poem: k }, { el: best.b, kind: 'poem', poem: k }];
+    out.fs = best.fs;
+    return out;
+  }
+
+  // Tamaño y altura de la acuarela flotante (px de página); su centro cae en el lomo.
+  artGeom(wf) {
+    const w = Math.min(this.pw * wf, this.ph * 0.86 * 0.75);
+    const h = w * 4 / 3;
+    return { w, h, top: (this.ph - h) / 2 + this.ph * 0.015 };
+  }
+
+  // Flujo de una página del pliego con un hueco (shape-outside) que sigue la silueta.
+  flowSpread(page, fs, poem, k, first, side, g) {
+    const inner = page.querySelector('.inner');
+    inner.innerHTML = '';
+    const flow = el('div', 'flow');
+    flow.style.setProperty('--fs', fs + 'px');
+    inner.appendChild(flow);
+    const iw = inner.clientWidth, il = inner.offsetLeft, it = inner.offsetTop;
+    const prof = poem.profile || [];
+    const n = prof.length;
+    const top = Math.max(0, g.top - it);
+    // borde izquierdo de la imagen en coordenadas del flujo de esta página
+    const imgLeft = side === 'left' ? this.pw - g.w / 2 - il : -g.w / 2 - il;
+    let boxW, pts;
+    if (side === 'left') {
+      const start = Math.max(0, imgLeft);
+      boxW = iw - start;
+      pts = prof.map(([x0], j) => [x0 < 0 ? boxW : Math.min(boxW, Math.max(0, imgLeft + g.w * x0 - start)), j / (n - 1) * g.h]);
+    } else {
+      boxW = Math.max(0, Math.min(iw, imgLeft + g.w * 1.06));
+      // margen extra a la derecha del dibujo: el texto de esta página nunca debe rozarlo
+      const extra = g.w * 0.06;
+      pts = prof.map(([, x1], j) => [x1 < 0 ? 0 : Math.min(boxW, Math.max(0, imgLeft + g.w * x1 + extra)), j / (n - 1) * g.h]);
+    }
+    if (boxW > 2 && n > 1) {
+      const edge = side === 'left' ? boxW : 0;
+      const poly = [[edge, 0], ...pts, [edge, g.h]].map(([x, y]) => `${x.toFixed(1)}px ${y.toFixed(1)}px`).join(', ');
+      const spacer = el('div', 'spacer ' + side);
+      spacer.style.height = top + 'px';
+      const shape = el('div', 'art-shape ' + side);
+      shape.style.width = boxW + 'px';
+      shape.style.height = g.h + 'px';
+      shape.style.shapeOutside = `polygon(${poly})`;
+      flow.append(spacer, shape);
+    }
+    if (first) {
+      flow.appendChild(el('p', 'num', ROMAN[k]));
+      flow.appendChild(el('h2', null, poem.title));
+    }
+    return { flow, limit: inner.clientHeight };
+  }
+
+  // Capa de la acuarela que flota sobre el pliego (una sola para todo el libro).
+  makeSpreadArt() {
+    const box = el('div', 'spread-art');
+    const img = el('img', 'art-base');
+    img.alt = '';
+    const canvas = el('canvas', 'splat-layer');
+    box.append(img, canvas);
+    this.bookEl.appendChild(box);
+    this.sArt = { box, img, canvas, view: null, poem: -1, t: 0 };
+  }
+
+  // Al cambiar de pliego: se apaga la acuarela, pasa la hoja y aparece la nueva.
+  updateSpreadArt(instant, delay = 0) {
+    const s = this.sArt;
+    if (this.mode !== 'spread' || !s) return;
+    const k = this.currentPoem();
+    clearTimeout(s.t);
+    if (k === s.poem) { s.box.classList.toggle('on', k >= 0); return; }
+    s.box.classList.remove('on');
+    const swap = () => {
+      if (s.view) { destroyView(s.view); s.view = null; }
+      s.poem = k;
+      if (k < 0) return;
+      const g = this.artGeoms[k], P = g.w * 0.14, poem = this.poems[k];
+      Object.assign(s.box.style, {
+        left: (this.pw - g.w / 2 - P) + 'px', top: (g.top - P) + 'px',
+        width: (g.w + 2 * P) + 'px', height: (g.h + 2 * P) + 'px',
+      });
+      Object.assign(s.img.style, { left: P + 'px', top: P + 'px', width: g.w + 'px', height: g.h + 'px' });
+      s.img.src = poem.imageAlpha || poem.image;
+      if (supported) {
+        s.view = createView(s.canvas, poem.splats, { getRect: () => ({ x: P, y: P, w: g.w }), initial: 1, target: () => 1 });
+        setVisible(s.view, !this.root.hidden);
+      }
+      requestAnimationFrame(() => requestAnimationFrame(() => s.box.classList.add('on')));
+    };
+    if (instant) swap(); else s.t = setTimeout(swap, Math.max(300, delay));
   }
 
   // Móvil: tantas páginas como haga falta; la acuarela va en la primera,
@@ -332,7 +469,7 @@ export class Reader {
     for (let guard = 0; guard < 20 && (i === 0 || i < units.length); guard++) {
       const first = i === 0 && !out.length;
       const page = this.makePoemPage(k);
-      const f = this.flowFor(page, fs, poem, k, first, first ? 0.8 : 0);
+      const f = this.flowFor(page, fs, poem, k, first, first ? 0.97 : 0);
       i = this.fill(f.flow, units, i, f.limit);
       page.remove();
       const p = { el: page, kind: 'poem', poem: k };
@@ -343,23 +480,39 @@ export class Reader {
     return out;
   }
 
+  // La caja .art reserva el hueco del texto; la acuarela se pinta más grande y sale
+  // por el borde derecho e inferior de la página (a sangre), como una ilustración impresa.
   attachArt(p, artEl, poem, k) {
-    const hint = el('button', 'listen', '<i></i><span>escuchar la oda</span>');
-    hint.type = 'button';
-    hint.addEventListener('click', e => { e.stopPropagation(); this.playPoem(k); });
-    artEl.appendChild(hint);
-    p.hint = hint;
-    p.hintPoem = k;
     const img = el('img', 'art-base');
     img.src = poem.image; img.alt = poem.title;
     if (!supported) img.classList.add('full');
     artEl.prepend(img);
-    if (!supported) return;
-    this.addArt(p, poem.splats, () => {
+    let last = '';
+    const rect = () => {
       let x = 0, y = 0, n = artEl;
       while (n && n !== p.el) { x += n.offsetLeft; y += n.offsetTop; n = n.offsetParent; }
-      return { x, y, w: artEl.offsetWidth };
-    }, { poem: k });
+      const w = artEl.offsetWidth, h = w * 4 / 3;
+      const inner = p.el.querySelector('.inner').offsetWidth;
+      let w2, x2, y2;
+      if (w > inner * 0.9) {
+        // página solo con acuarela: un poco más grande, centrada y baja
+        w2 = w * 1.12; x2 = x + (w - w2) / 2; y2 = y + h - w2 * 4 / 3 + h * 0.05;
+      } else {
+        // crece solo hacia la derecha y hacia abajo: nunca tapa el texto
+        w2 = w * 1.22;
+        x2 = x;
+        y2 = y;
+      }
+      const key = `${x2 - x}|${y2 - y}|${w2}`;
+      if (key !== last) {
+        last = key;
+        Object.assign(img.style, { left: (x2 - x) + 'px', top: (y2 - y) + 'px', width: w2 + 'px', height: (w2 * 4 / 3) + 'px', inset: 'auto' });
+      }
+      return { x: x2, y: y2, w: w2 };
+    };
+    p.artRect = rect;
+    if (!supported) { requestAnimationFrame(rect); return; }
+    this.addArt(p, poem.splats, rect, { poem: k });
   }
 
   addArt(p, url, rect, opts) {
@@ -390,6 +543,7 @@ export class Reader {
       this.leaves.push(leaf);
     }
     this.pos = 0;
+    this.makeSpreadArt();
     this.applySpread(false);
   }
 
@@ -477,6 +631,7 @@ export class Reader {
     clearTimeout(this._vt);
     this._vt = setTimeout(() => this.refreshVisible(), dur + 30);
     this.onPositionChange();
+    this.updateSpreadArt(instant, dur - 150);
   }
 
   goToPoem(k, instant = false) {
@@ -499,6 +654,7 @@ export class Reader {
       : [this.pages[this.pos + 1]];
     near.forEach(p => p && p.art && this.ensureView(p));
     this.pages.forEach(p => this.show(p, vis.has(p) && !this.root.hidden));
+    if (this.sArt && this.sArt.view) setVisible(this.sArt.view, !this.root.hidden);
   }
 
   anchor() {
@@ -521,11 +677,12 @@ export class Reader {
   }
 
   onPositionChange() {
+    this.stage.classList.toggle('at-cover', this.pos === 0);
     const k = this.currentPoem();
     const slug = k >= 0 ? this.poems[k].slug : '';
     const hash = '#libro' + (slug ? '/' + slug : '');
     if (!this.quiet && location.hash !== hash) history.replaceState(null, '', hash);
-    if (k !== this.audioPoem) this.loadPoem(k, this.continueNext);
+    if (k !== this.audioPoem) this.loadPoem(k, !this.quiet && k >= 0);
     this.continueNext = false;
     this.root.querySelector('[data-prev]').disabled = this.pos === 0;
     this.root.querySelector('[data-next]').disabled = this.pos === this.maxPos;
@@ -562,7 +719,7 @@ export class Reader {
     const t = this.saved[k].t;
     const startAt = () => { a.currentTime = Math.min(t, (a.duration || t + 1) - 0.05); this.updateBar(); };
     if (t > 0) a.addEventListener('loadedmetadata', startAt, { once: true });
-    if (autoplay) a.play().catch(() => {});
+    if (autoplay) a.play().catch(() => this.setPlaying(false));
     this.setPlaying(autoplay);
     this.updateBar();
     if ('mediaSession' in navigator) {
@@ -593,7 +750,6 @@ export class Reader {
     ui.fill.style.width = d ? (t / d * 100) + '%' : '0';
     ui.time.textContent = d ? `${fmt(t)} / ${fmt(d)}` : fmt(t);
     if (d) this.saved[this.audioPoem].ratio = t / d;
-    this.pages.forEach(p => p.hint && p.hint.classList.toggle('hide', this.progressFor(p.hintPoem) > 0.02 || (p.hintPoem === this.audioPoem && !a.paused)));
   }
 
   initPlayer() {
@@ -650,6 +806,15 @@ export class Reader {
   // ------------------------------------------------------------- entrada
   initInput() {
     const r = this.root;
+    const wake = () => {
+      r.classList.remove('idle');
+      clearTimeout(this._idle);
+      this._idle = setTimeout(() => {
+        if (!r.querySelector('.reader-bar:hover, .player:hover, .nav:hover')) r.classList.add('idle');
+      }, 2800);
+    };
+    ['pointermove', 'pointerdown', 'keydown', 'touchstart'].forEach(ev => r.addEventListener(ev, wake, { passive: true }));
+    this.wake = wake;
     r.querySelector('[data-next]').addEventListener('click', () => this.next());
     r.querySelector('[data-prev]').addEventListener('click', () => this.prev());
 
@@ -678,6 +843,11 @@ export class Reader {
 
   feedPointer(e) {
     if (performance.now() < this.busyUntil) return;
+    const s = this.sArt;
+    if (s && s.view) {
+      const b = s.box.getBoundingClientRect();
+      pointer(s.view, e.clientX, e.clientY, e.clientX >= b.left && e.clientX <= b.right && e.clientY >= b.top && e.clientY <= b.bottom);
+    }
     for (const p of this.visiblePages()) {
       if (!p.view) continue;
       const b = p.el.getBoundingClientRect();

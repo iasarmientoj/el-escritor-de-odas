@@ -15,6 +15,8 @@ uniform vec3 uRect;   // x, y, px por unidad (ancho de la imagen = 1)
 uniform float uProg, uTime, uGhost, uAlpha, uDpr;
 uniform float uBurst, uSpread, uFade;   // explosion al abrir el libro (0..1), alcance en unidades de imagen y desvanecido final
 uniform float uKeep;   // cuantas pinceladas (las mas grandes) siguen visibles al final de la explosion
+uniform float uWipe;   // cortina: linea de pinceladas que baja desde el borde superior (0..1)
+uniform float uCrisp;  // 1 = en reposo no se ven (se ve la imagen original nitida); aparecen al moverlas
 uniform vec2 uCenter;
 out vec2 vUV;
 out vec4 vCol;
@@ -48,6 +50,17 @@ void main() {
     p += bd * eb * reach + side * wave;
     p.y -= eb * eb * 0.12 * edge;   // leve subida, como petalos que se lleva el aire
   }
+  if (uWipe > 0.0) {
+    // cortina: las pinceladas forman una franja ondulada a lo ancho de la pantalla que baja
+    float H = uView.y, W = uView.x;
+    float band = 0.045 * H;
+    float lx = fract(seed * 31.1) * (W + 0.1 * W) - 0.05 * W;
+    float ly = uWipe * (H + 2.0 * band) - band
+             + sin(lx / W * 9.0 + uWipe * 7.0) * 0.014 * H
+             + (fract(seed * 47.9) - 0.5) * band * 0.8
+             - pow(fract(seed * 71.3), 8.0) * band * 2.0;   // algunas gotas se quedan atras
+    p = (vec2(lx, ly) - uRect.xy) / uRect.z;
+  }
   float s = uRect.z;
   vec2 sz = aShape.xy * s;
   float minS = 0.55 * uDpr;
@@ -55,7 +68,7 @@ void main() {
   float m = min(sz.x, sz.y);
   if (m < minS) { aa = max(m / minS, 0.25); sz = max(sz, vec2(minS)); }
   // al explotar, las pinceladas crecen hasta cubrir la pantalla entera
-  sz *= mix(1.15, 1.0, k) * (1.0 + eb * 26.0);
+  sz *= mix(1.15, 1.0, k) * (1.0 + eb * 26.0) * (uWipe > 0.0 ? 1.25 : 1.0);
   float c = cos(aShape.z), sn = sin(aShape.z);
   vec2 q = aCorner * 3.0 * sz;
   vec2 rq = vec2(q.x * c - q.y * sn, q.x * sn + q.y * c);
@@ -66,6 +79,11 @@ void main() {
   // las pinceladas finas se apagan pronto; las grandes cubren la pantalla hasta el desvanecido
   if (float(gl_InstanceID) >= uKeep) vis *= 1.0 - smoothstep(0.15, 0.55, uBurst);
   vis *= 1.0 - uFade;
+  vis *= 1.0 - smoothstep(0.86, 1.0, uWipe);
+  if (uCrisp > 0.5) vis *= smoothstep(0.004, 0.03, length(aOff));
+  // las pinceladas casi blancas no aportan dibujo y velan el papel: se atenuan
+  float inkc = 1.0 - min(min(aColor.r, aColor.g), aColor.b);
+  vis *= smoothstep(0.05, 0.2, inkc);
   vCol = vec4(aColor.rgb, aColor.a * aa * vis);
 }`;
 
@@ -193,7 +211,7 @@ class Renderer {
     this.prog = p;
     this.loc = {};
     for (const a of ['aCorner', 'aHome', 'aShape', 'aFly', 'aColor', 'aOff']) this.loc[a] = gl.getAttribLocation(p, a);
-    for (const u of ['uView', 'uRect', 'uProg', 'uTime', 'uGhost', 'uAlpha', 'uDpr', 'uBurst', 'uSpread', 'uCenter', 'uFade', 'uKeep']) this.loc[u] = gl.getUniformLocation(p, u);
+    for (const u of ['uView', 'uRect', 'uProg', 'uTime', 'uGhost', 'uAlpha', 'uDpr', 'uBurst', 'uSpread', 'uCenter', 'uFade', 'uKeep', 'uWipe', 'uCrisp']) this.loc[u] = gl.getUniformLocation(p, u);
     this.quad = gl.createBuffer();
     gl.bindBuffer(gl.ARRAY_BUFFER, this.quad);
     gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1, -1, 1, -1, -1, 1, 1, 1]), gl.STATIC_DRAW);
@@ -269,6 +287,8 @@ class Renderer {
     gl.uniform1f(L.uBurst, view.burst || 0);
     gl.uniform1f(L.uFade, view.fade || 0);
     gl.uniform1f(L.uKeep, KEEP);
+    gl.uniform1f(L.uWipe, view.wipe || 0);
+    gl.uniform1f(L.uCrisp, view.crisp ? 1 : 0);
     gl.uniform1f(L.uSpread, Math.hypot(cw, ch) / Math.max(1, r.w * d));
     gl.uniform2f(L.uCenter, 0.5, set.aspect / 2);
     const ghost = view.ghost * (1 - Math.min(1, view.p * 1.6));
@@ -278,7 +298,7 @@ class Renderer {
     }
     if (view.p > 0.001) {
       gl.uniform1f(L.uGhost, 0); gl.uniform1f(L.uProg, view.p); gl.uniform1f(L.uAlpha, 1);
-      const count = (view.burst || 0) > 0.55 ? Math.min(set.n, KEEP) : set.n;
+      const count = (view.burst || 0) > 0.55 || (view.wipe || 0) > 0 ? Math.min(set.n, KEEP) : set.n;
       gl.drawArraysInstanced(gl.TRIANGLE_STRIP, 0, 4, count);
     }
     gl.bindVertexArray(null);
@@ -308,7 +328,7 @@ export function createView(canvas, url, opts = {}) {
   const view = {
     canvas, ctx: canvas.getContext('2d'), set: null, p: opts.initial ?? 0,
     ghost: opts.ghost ?? 0, getRect: opts.getRect, target: opts.target || (() => 1),
-    speed: opts.speed ?? 2.2, visible: false, dpr: 1, rect: { x: 0, y: 0, w: 1 }, maxDpr: opts.maxDpr, burst: 0,
+    speed: opts.speed ?? 2.2, visible: false, dpr: 1, rect: { x: 0, y: 0, w: 1 }, maxDpr: opts.maxDpr, burst: 0, wipe: 0, crisp: opts.crisp ?? true,
     mouse: { x: 0, y: 0, vx: 0, vy: 0, active: false, lastT: 0 },
     dirtyFrame: true, ready: null,
   };
@@ -332,7 +352,10 @@ export function pointer(view, clientX, clientY, inside = true) {
   if (!inside) { m.active = false; return; }
   const b = view.canvas.getBoundingClientRect();
   const r = view.rect;
-  const x = (clientX - b.left - r.x) / r.w, y = (clientY - b.top - r.y) / r.w;
+  // el canvas puede estar escalado (portada flotando, libro en 3D): corregir la escala
+  const sx = b.width / (view.canvas.offsetWidth || b.width);
+  const sy = b.height / (view.canvas.offsetHeight || b.height);
+  const x = ((clientX - b.left) / sx - r.x) / r.w, y = ((clientY - b.top) / sy - r.y) / r.w;
   const now = performance.now();
   if (m.active && now - m.lastT < 120) {
     const k = Math.min(1, 16 / Math.max(1, now - m.lastT));
@@ -409,6 +432,26 @@ export const fadeOut = (view, ms = 800) => animate(view, 'fade', ms);
  * Transición de un solo movimiento: explotan, cubren la pantalla y se desvanecen
  * sin detenerse. onCovered se llama cuando la pantalla ya está cubierta.
  */
+/**
+ * Cortina: una linea de pinceladas baja desde el borde superior hasta el inferior.
+ * onFrame(t, y) recibe el progreso y la altura de la linea en px CSS.
+ */
+export function wipe(view, ms = 1700, onFrame) {
+  return new Promise(resolve => {
+    const t0 = performance.now();
+    const tick = now => {
+      const x = Math.min(1, (now - t0) / ms);
+      const t = x < 0.5 ? 2 * x * x : 1 - Math.pow(-2 * x + 2, 2) / 2;   // suave al entrar y al salir
+      view.wipe = Math.max(0.0001, t);
+      const H = innerHeight, band = H * 0.045;
+      onFrame && onFrame(t, t * (H + 2 * band) - band);
+      if (x < 1) requestAnimationFrame(tick); else resolve();
+    };
+    setVisible(view, true);
+    requestAnimationFrame(tick);
+  });
+}
+
 export function transition(view, ms = 2100, onCovered) {
   return new Promise(resolve => {
     const t0 = performance.now();

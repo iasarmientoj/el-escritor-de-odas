@@ -165,6 +165,58 @@ def pack(sp):
     return head.tobytes() + xy.tobytes() + ss.tobytes() + rgba.tobytes()
 
 
+def whiten(src):
+    """Acuarela con el papel llevado a blanco puro y los bordes fundidos (600 x 800)."""
+    a = np.asarray(Image.open(src).convert("RGB").resize((600, 800), Image.LANCZOS), dtype=np.float32) / 255.0
+    paper = np.percentile(a.reshape(-1, 3), 90, axis=0)
+    a = np.clip(a / paper, 0, 1)
+    ink = 1 - a.min(axis=2, keepdims=True)
+    k = np.clip((ink - 0.03) / 0.10, 0, 1)
+    a = 1 - (1 - a) * k
+    h, w = a.shape[:2]
+    yy, xx = np.mgrid[0:h, 0:w]
+    d = np.minimum.reduce([xx, w - 1 - xx, yy, h - 1 - yy]).astype(np.float32)
+    edge = np.clip(d / (min(h, w) * 0.07), 0, 1)[..., None]
+    edge = edge * edge * (3 - 2 * edge)
+    return 1 - (1 - a) * edge
+
+
+def alpha_version(white):
+    """La misma acuarela con fondo transparente (pigmento + alfa), para que la sombra
+    siga el dibujo y no un rectángulo."""
+    ink = 1 - white.min(axis=2)
+    alpha = np.clip((ink - 0.07) * 2.8, 0, 1)   # sin los lavados más pálidos (evita un halo claro)
+    pig = np.clip((white - (1 - alpha[..., None])) / np.maximum(alpha[..., None], 1e-3), 0, 1)
+    rgba = np.dstack([pig, alpha])
+    return Image.fromarray((rgba * 255 + 0.5).astype(np.uint8), "RGBA")
+
+
+def profile(white, rows=48):
+    """Silueta por filas: [x mínimo, x máximo] de la tinta (0..1), o [-1, -1] si la fila está vacía.
+    Sirve para que el texto rodee el dibujo."""
+    ink = 1 - white.min(axis=2)
+    mask = ink > 0.05   # incluye trazos tenues (pelo, salpicaduras, lluvia)
+    # quitar salpicaduras sueltas: quedarse con las manchas grandes del dibujo
+    mask = ndimage.binary_opening(mask, iterations=1)
+    lab, n = ndimage.label(mask)
+    if n:
+        sizes = ndimage.sum(mask, lab, range(1, n + 1))
+        mask = np.isin(lab, 1 + np.where(sizes >= max(120, sizes.max() * 0.004))[0])
+    mask = ndimage.binary_dilation(mask, iterations=8)
+    h, w = mask.shape
+    out = []
+    for r in range(rows):
+        band = mask[int(r * h / rows):int((r + 1) * h / rows)]
+        cols = np.where(band.any(axis=0))[0]
+        out.append([-1, -1] if len(cols) < 3 else [cols[0] / w, cols[-1] / w])
+    # ensanchar un poco hacia arriba y abajo para que el texto no roce las puntas
+    wide = []
+    for r in range(rows):
+        near = [out[q] for q in range(max(0, r - 2), min(rows, r + 3)) if out[q][0] >= 0]
+        wide.append([-1, -1] if not near else [round(min(a for a, _ in near), 3), round(max(b for _, b in near), 3)])
+    return wide
+
+
 def first_line_and_body(md):
     lines = md.replace("\r\n", "\n").strip().split("\n")
     title = lines[0].strip().lstrip("#").strip()
@@ -178,6 +230,8 @@ def main():
     ap.add_argument("--only", default="")
     ap.add_argument("--preview", action="store_true")
     ap.add_argument("--skip-audio", action="store_true")
+    ap.add_argument("--datos", action="store_true",
+                    help="solo imágenes, siluetas y poems.json (sin splats ni audio)")
     args = ap.parse_args()
     for d in (OUT_SPLATS, OUT_AUDIO, OUT_IMG, WEB / "data"):
         d.mkdir(parents=True, exist_ok=True)
@@ -186,18 +240,24 @@ def main():
     for i, name in enumerate(ORDER):
         slug = slugify(name)
         title, body = first_line_and_body((ROOT / f"{name}.md").read_text(encoding="utf-8"))
+        src = ROOT / f"{name}.jpg"
+        white = whiten(src)
         poems.append({
             "slug": slug, "title": title, "text": body,
             "audio": f"assets/audio/{slug}.mp3",
             "splats": f"assets/splats/{slug}.bin",
             "image": f"assets/img/{slug}.jpg",
+            "imageAlpha": f"assets/img/{slug}-alfa.webp",
+            "profile": profile(white),
         })
         if args.only and args.only not in name:
             continue
         print(f"[{i + 1}/{len(ORDER)}] {title}")
-        src = ROOT / f"{name}.jpg"
-        Image.open(src).convert("RGB").resize((600, 800), Image.LANCZOS).save(
+        Image.fromarray((white * 255 + 0.5).astype(np.uint8)).save(
             OUT_IMG / f"{slug}.jpg", quality=84, optimize=True, progressive=True)
+        alpha_version(white).save(OUT_IMG / f"{slug}-alfa.webp", quality=82, method=6)
+        if args.datos:
+            continue
 
         rng = np.random.default_rng(7 + i)
         sp, canvas, tgt, err = fit_image(src, rng)
