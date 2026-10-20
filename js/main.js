@@ -10,16 +10,9 @@ $$('[data-buy]').forEach(a => {
   a.href = buyHref();
   if (CONFIG.buyUrl) { a.target = '_blank'; a.rel = 'noopener'; }
 });
-$$('[data-mail]').forEach(a => { a.href = `mailto:${CONFIG.email}`; a.textContent = CONFIG.email; });
 $$('[data-tiktok]').forEach(a => {
   if (!CONFIG.tiktokUrl) { a.hidden = true; return; }
   a.href = CONFIG.tiktokUrl; a.target = '_blank'; a.rel = 'noopener';
-});
-
-// contacto por Gmail (abre la redacción de Gmail en una pestaña nueva)
-$$('[data-gmail]').forEach(a => {
-  const su = encodeURIComponent('Hola, Iván');
-  a.href = `https://mail.google.com/mail/?view=cm&fs=1&to=${CONFIG.email}&su=${su}`;
 });
 
 // biblioteca: el resto de la rejilla son libros por venir
