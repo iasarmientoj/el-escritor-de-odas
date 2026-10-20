@@ -225,7 +225,7 @@ export class Reader {
       <section class="s-end">
         <h2>Gracias por leer</h2>
         <p>Si alguna oda se quedó contigo, llévate el libro o escríbeme&nbsp;por&nbsp;TikTok.</p>
-        <a class="btn primary" href="${buyHref()}">Comprar el libro</a>
+        <a class="btn primary" href="${buyHref()}" target="_blank" rel="noopener">Comprar el libro</a>
         <p class="contact">${tik}</p>
         <p class="license">© 2026 Iván Sarmiento · <a href="https://creativecommons.org/licenses/by-nc-nd/4.0/deed.es" target="_blank" rel="noopener license">CC BY-NC-ND 4.0</a>: puedes compartirlo citando al autor, sin venderlo ni modificarlo.</p>
       </section>`);
@@ -323,7 +323,7 @@ export class Reader {
     page.querySelector('.inner').innerHTML = `
       <h2>Gracias por leer</h2>
       <p class="end-msg">Si alguna oda se quedó contigo, llévate el libro o escríbeme&nbsp;por&nbsp;TikTok.</p>
-      <a class="btn primary" href="${buyHref()}">Comprar el libro</a>
+      <a class="btn primary" href="${buyHref()}" target="_blank" rel="noopener">Comprar el libro</a>
       <p class="contact">${tik}</p>
       <p class="license">© 2026 Iván Sarmiento<br><a href="https://creativecommons.org/licenses/by-nc-nd/4.0/deed.es" target="_blank" rel="noopener license">CC BY-NC-ND 4.0</a>: puedes compartirlo citando al autor, sin venderlo ni modificarlo.</p>`;
     return { el: page, kind: 'end' };

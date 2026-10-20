@@ -4,7 +4,7 @@ export const CONFIG = {
 
   // Enlace de compra (Hotmart, Payhip, Amazon, etc.). Si se deja vacío,
   // el botón "Comprar" abre un correo para pedir el libro.
-  buyUrl: '',
+  buyUrl: 'https://go.hotmart.com/D108109403B',
 
   // Perfil de TikTok. Vacío = se oculta el botón.
   tiktokUrl: 'https://www.tiktok.com/@elescritordeodas',
