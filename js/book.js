@@ -58,7 +58,7 @@ export class Reader {
     document.body.style.overflow = 'hidden';
     requestAnimationFrame(() => this.root.classList.add('show'));
     if (this.wake) this.wake();
-    if (!this.pages.length || this.stale) { this.build(); this.stale = false; }
+    if ((!this.pages.length && this.mode !== 'scroll') || this.stale || (this.mode === 'scroll' && !this.scrollSecs)) { this.build(); this.stale = false; }
     const idx = slug ? this.poems.findIndex(p => p.slug === slug) : -1;
     if (idx >= 0) this.goToPoem(idx, first);
     else if (first) this.goTo(0, true);
@@ -95,12 +95,17 @@ export class Reader {
   // ------------------------------------------------------------- construcción
   measure() {
     const sw = this.stage.clientWidth, sh = this.stage.clientHeight;
-    const desktop = sw >= 720 && sw > sh * 1.12;
+    // el libro abierto a doble página solo si cada página queda de un tamaño legible
+    const spreadPw = Math.floor(Math.min((sw - 120) / 2, (sh - 40) * 0.75));
+    const desktop = sw >= 720 && sw > sh * 1.12 && spreadPw >= 330;
     let pw, ph;
     if (desktop) {
-      const availW = sw - 120, availH = sh - 40;
-      pw = Math.floor(Math.min(availW / 2, availH * 0.75));
+      pw = spreadPw;
       ph = Math.floor(pw * 4 / 3);
+    } else if (sw > sh) {
+      // celular acostado: una sola página apaisada que ocupa la pantalla
+      pw = Math.floor(Math.min(sw - 110, 620));
+      ph = Math.floor(sh - 24);
     } else {
       const availW = sw - 24, availH = sh - 96;
       pw = Math.floor(Math.min(availW, 560, availH / 1.2));
@@ -117,6 +122,8 @@ export class Reader {
     this.artGeoms = [];
     this.pages = [];
     const { mode, pw, ph } = this.measure();
+    if (mode !== 'spread') { this.buildScroll(anchor); return; }
+    this.root.classList.remove('scrolling');
     this.mode = mode; this.pw = pw; this.ph = ph;
     const book = this.bookEl;
     book.innerHTML = '';
@@ -161,6 +168,101 @@ export class Reader {
 
     if (mode === 'spread') this.mountSpread(); else this.mountSingle();
     this.restore(anchor);
+  }
+
+  // ------------------------------------------------------------- celular: lectura con scroll
+  // Cada oda completa, con su acuarela al final. Sin pasar páginas.
+  buildScroll(anchor) {
+    this.mode = 'scroll';
+    this.root.classList.add('scrolling');
+    this.stage.classList.remove('at-cover');
+    const book = this.bookEl;
+    book.className = 'book scroll';
+    book.style.width = ''; book.style.height = ''; book.style.transform = '';
+    book.innerHTML = '';
+    const doc = el('div', 'scroll-doc');
+    const tik = CONFIG.tiktokUrl ? `<a href="${CONFIG.tiktokUrl}" target="_blank" rel="noopener">Sígueme en TikTok</a>` : '';
+    doc.insertAdjacentHTML('beforeend', `
+      <section class="s-cover">
+        <h1>El girasol<em>que cobró consciencia de sol</em></h1>
+        <img src="assets/img/oda-al-girasol-feliz.jpg" alt="">
+        <p class="s-by">El escritor de odas</p>
+      </section>
+      <section class="s-epigraph">
+        <blockquote>Quizá por eso llora amarillo.<br>No porque no alcance al sol,<br>Sino porque nadie le ha dicho<br>Que ya lo es.</blockquote>
+        <cite>— Oda al girasol triste</cite>
+      </section>
+      <section class="s-index"><h2>Índice</h2><ol></ol></section>`);
+    const ol = doc.querySelector('.s-index ol');
+    this.scrollSecs = this.poems.map((poem, k) => {
+      const li = el('li');
+      const b = el('button', null, `<span>${ROMAN[k]}.</span> ${poem.title}`);
+      b.type = 'button';
+      b.addEventListener('click', () => this.scrollToPoem(k));
+      li.appendChild(b); ol.appendChild(li);
+      const sec = el('section', 's-poem');
+      sec.dataset.poem = k;
+      sec.appendChild(el('p', 'num', ROMAN[k]));
+      sec.appendChild(el('h2', null, poem.title));
+      const body = el('div', 'flow-s');
+      let st = null;
+      unitsOf(poem.text).forEach(u => {
+        if (u.t === 'br') { st = null; return; }
+        if (!st) { st = el('div', 'st'); body.appendChild(st); }
+        const ln = el('div', 'ln' + (u.prose ? ' pr' : ''));
+        ln.textContent = u.s;
+        st.appendChild(ln);
+      });
+      sec.appendChild(body);
+      const fig = el('figure');
+      const img = el('img'); img.src = poem.image; img.alt = poem.title; img.loading = 'lazy';
+      fig.appendChild(img);
+      sec.appendChild(fig);
+      doc.appendChild(sec);
+      return sec;
+    });
+    doc.insertAdjacentHTML('beforeend', `
+      <section class="s-end">
+        <h2>Gracias por leer</h2>
+        <p>Si alguna oda se quedó contigo, llévate el libro o escríbeme&nbsp;por&nbsp;TikTok.</p>
+        <a class="btn primary" href="${buyHref()}">Comprar el libro</a>
+        <p class="contact">${tik}</p>
+        <p class="license">© 2026 Iván Sarmiento · <a href="https://creativecommons.org/licenses/by-nc-nd/4.0/deed.es" target="_blank" rel="noopener license">CC BY-NC-ND 4.0</a>: puedes compartirlo citando al autor, sin venderlo ni modificarlo.</p>
+      </section>`);
+    book.appendChild(doc);
+    this.scrollPoem = -1;
+    if (!this._onScroll) {
+      this._onScroll = () => {
+        if (this.mode !== 'scroll' || this._scrollRaf) return;
+        this._scrollRaf = requestAnimationFrame(() => { this._scrollRaf = 0; this.scrollChanged(); });
+      };
+      book.addEventListener('scroll', this._onScroll, { passive: true });
+    }
+    const k = anchor && anchor.poem != null ? anchor.poem : -1;
+    if (k >= 0) requestAnimationFrame(() => this.scrollToPoem(k, true));
+    else book.scrollTop = 0;
+    this.scrollChanged();
+  }
+
+  scrollToPoem(k, instant = false) {
+    const sec = this.scrollSecs && this.scrollSecs[k];
+    if (sec) this.bookEl.scrollTo({ top: sec.offsetTop - 64, behavior: instant ? 'auto' : 'smooth' });
+  }
+
+  // qué oda se está leyendo: la que ocupa la línea a un 40 % de la pantalla
+  scrollChanged() {
+    const line = this.bookEl.scrollTop + this.bookEl.clientHeight * 0.4;
+    let k = -1;
+    (this.scrollSecs || []).forEach((sec, i) => {
+      if (sec.offsetTop <= line && sec.offsetTop + sec.offsetHeight > line) k = i;
+    });
+    if (k === this.scrollPoem) return;
+    this.scrollPoem = k;
+    const hash = '#libro' + (k >= 0 ? '/' + this.poems[k].slug : '');
+    if (!this.quiet && !this.root.hidden && location.hash !== hash) history.replaceState(null, '', hash);
+    // el audio arranca solo si la persona ya tocó la página (lo exige el navegador)
+    const active = !navigator.userActivation || navigator.userActivation.hasBeenActive;
+    if (k !== this.audioPoem) this.loadPoem(k, !this.quiet && !this.root.hidden && k >= 0 && active);
   }
 
   newPage(cls) {
@@ -468,11 +570,31 @@ export class Reader {
     for (let guard = 0; guard < 20 && (i === 0 || i < units.length); guard++) {
       const first = i === 0 && !out.length;
       const page = this.makePoemPage(k);
-      const f = this.flowFor(page, fs, poem, k, first, first ? 0.97 : 0);
-      i = this.fill(f.flow, units, i, f.limit);
+      const f = this.flowFor(page, fs, poem, k, first, 0);
+      let artEl = null;
+      let limit = f.limit;
+      if (first) {
+        const inner = page.querySelector('.inner');
+        const fw = inner.clientWidth, fh = inner.clientHeight;
+        artEl = el('div', 'art art-mobile');
+        if (this.pw > this.ph) {
+          // celular acostado: la acuarela a la derecha, a toda la altura, y el texto a su lado
+          const h = fh, w = h * 3 / 4;
+          Object.assign(artEl.style, { position: 'absolute', width: w + 'px', height: h + 'px', right: '0', top: '0' });
+          inner.appendChild(artEl);
+          f.flow.style.right = (w + fs) + 'px';
+        } else {
+          // celular de pie: la acuarela abajo y centrada, como máximo media página
+          const h = Math.min(fh * 0.5, fw * 0.9 * 4 / 3), w = h * 3 / 4;
+          Object.assign(artEl.style, { position: 'absolute', width: w + 'px', height: h + 'px', left: ((fw - w) / 2) + 'px', bottom: '0' });
+          f.flow.appendChild(artEl);
+          limit = fh - h - fs;
+        }
+      }
+      i = this.fill(f.flow, units, i, limit);
       page.remove();
       const p = { el: page, kind: 'poem', poem: k };
-      if (first) this.attachArt(p, f.artEl, poem, k);
+      if (first) this.attachArt(p, artEl, poem, k);
       out.push(p);
       if (!units.slice(i).some(u => u.t === 'ln')) break;
     }
@@ -510,7 +632,7 @@ export class Reader {
       return { x: x2, y: y2, w: w2 };
     };
     p.artRect = rect;
-    if (!supported) { requestAnimationFrame(rect); return; }
+    if (!supported) return;
     this.addArt(p, poem.splats, rect, { poem: k });
   }
 
@@ -586,6 +708,7 @@ export class Reader {
   prev() { if (this.pos > 0) this.goTo(this.pos - 1); }
 
   goTo(target, instant = false) {
+    if (this.mode === 'scroll') { if (target === 0) this.bookEl.scrollTo({ top: 0 }); return; }
     target = Math.max(0, Math.min(this.maxPos, target));
     const from = this.pos;
     if (target === from && !instant) return;
@@ -634,6 +757,7 @@ export class Reader {
   }
 
   goToPoem(k, instant = false) {
+    if (this.mode === 'scroll') return this.scrollToPoem(k, instant);
     const start = this.poemStart[k];
     const pos = this.mode === 'spread' ? Math.ceil(start / 2) : start;
     this.goTo(pos, instant);
@@ -657,6 +781,7 @@ export class Reader {
   }
 
   anchor() {
+    if (this.mode === 'scroll') return this.scrollPoem >= 0 ? { kind: 'poem', poem: this.scrollPoem } : null;
     if (!this.pages.length) return null;
     const p = this.visiblePages().find(p => p.poem != null) || this.visiblePages()[0];
     return p ? { kind: p.kind, poem: p.poem } : null;
@@ -671,6 +796,7 @@ export class Reader {
   }
 
   currentPoem() {
+    if (this.mode === 'scroll') return this.scrollPoem;
     const p = this.visiblePages().find(p => p.poem != null);
     return p ? p.poem : -1;
   }
@@ -827,6 +953,7 @@ export class Reader {
     this.stage.addEventListener('pointerup', e => {
       if (e.pointerType !== 'mouse') this.pages.forEach(p => p.view && pointer(p.view, 0, 0, false));
       if (!down) return;
+      if (this.mode === 'scroll') { down = null; return; }
       const dx = e.clientX - down.x, dy = e.clientY - down.y, dt = performance.now() - down.t;
       down = null;
       if (Math.abs(dx) > 45 && Math.abs(dx) > Math.abs(dy) * 1.3) { dx < 0 ? this.next() : this.prev(); return; }
@@ -834,6 +961,7 @@ export class Reader {
     });
     window.addEventListener('keydown', e => {
       if (r.hidden) return;
+      if (this.mode === 'scroll') return;
       if (e.key === 'ArrowRight' || e.key === 'PageDown') this.next();
       else if (e.key === 'ArrowLeft' || e.key === 'PageUp') this.prev();
       else if (e.key === ' ' && !e.target.closest('button')) { e.preventDefault(); this.ui.play.click(); }

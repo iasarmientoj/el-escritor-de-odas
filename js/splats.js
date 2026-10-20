@@ -318,7 +318,9 @@ const views = new Set();
 let last = 0, running = false;
 const t0 = performance.now();
 
-export const supported = (() => {
+// En celulares y tabletas no se usan los splats: se muestran las acuarelas como imágenes.
+export const lite = matchMedia('(hover: none), (pointer: coarse), (max-width: 860px)').matches;
+export const supported = !lite && (() => {
   try { return !!document.createElement('canvas').getContext('webgl2'); } catch { return false; }
 })();
 
