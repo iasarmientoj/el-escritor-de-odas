@@ -59,6 +59,10 @@ void main() {
              + sin(lx / W * 9.0 + uWipe * 7.0) * 0.014 * H
              + (fract(seed * 47.9) - 0.5) * band * 0.8
              - pow(fract(seed * 71.3), 8.0) * band * 2.0;   // algunas gotas se quedan atras
+    // movimiento propio de cada pincelada dentro de la franja (amontonadas pero vivas)
+    float wob = 0.018 * H;
+    lx += sin(uTime * 2.3 + seed * 41.0) * wob * 1.6 + sin(uWipe * 18.0 + seed * 9.0) * wob;
+    ly += cos(uTime * 2.9 + seed * 27.0) * wob + sin(uWipe * 23.0 + seed * 13.0) * wob * 0.6;
     p = (vec2(lx, ly) - uRect.xy) / uRect.z;
   }
   float s = uRect.z;

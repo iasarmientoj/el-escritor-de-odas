@@ -190,8 +190,8 @@ export class Reader {
   epigraphPage() {
     const page = this.newPage('p-epigraph');
     page.querySelector('.inner').innerHTML = `
-      <blockquote>Nadie me dijo<br>que los girasoles<br>lloraban amarillo.</blockquote>
-      <cite>Oda al girasol triste</cite>`;
+      <blockquote>Quizá por eso llora amarillo.<br>No porque no alcance al sol,<br>Sino porque nadie le ha dicho<br>Que ya lo es.</blockquote>
+      <cite>— Oda al girasol triste</cite>`;
     return { el: page, kind: 'epigraph' };
   }
 
@@ -217,14 +217,12 @@ export class Reader {
 
   endPage() {
     const page = this.newPage('p-end');
-    const tik = CONFIG.tiktokUrl
-      ? `<a class="btn ghost end-tiktok" href="${CONFIG.tiktokUrl}" target="_blank" rel="noopener">Sígueme en TikTok</a>` : '';
+    const tik = CONFIG.tiktokUrl ? `<a href="${CONFIG.tiktokUrl}" target="_blank" rel="noopener">Sígueme en TikTok</a>` : '';
     page.querySelector('.inner').innerHTML = `
       <h2>Gracias por leer</h2>
       <p>Si alguna oda se quedó contigo, llévate el libro o escríbeme.</p>
       <a class="btn primary" href="${buyHref()}">Comprar el libro</a>
-      ${tik}
-      <p class="contact"><a href="mailto:${CONFIG.email}">${CONFIG.email}</a></p>`;
+      <p class="contact">${tik}<a href="mailto:${CONFIG.email}">Envíame un correo</a></p>`;
     return { el: page, kind: 'end' };
   }
 

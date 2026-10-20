@@ -159,7 +159,7 @@ h1 em { color: #e9b84a; font-weight: 400; }
 }
 .book-3d:hover .book-cover { transform: rotateY(-22deg); }
 .book-3d:hover .book-pages { transform: rotateY(-17deg) translateZ(-6px); }
-.cover-splats { position: absolute; inset: 0; width: 100%; height: 100%; display: block; mix-blend-mode: multiply; }
+.cover-splats { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
 /* imagen original al 50 % bajo los splats: mismo rectángulo que en js (x 13 %, ancho 74 %) */
 .cover-base { position: absolute; left: 13%; width: 74%; bottom: 7.5%; aspect-ratio: 3 / 4; height: auto; opacity: 1; mix-blend-mode: multiply; pointer-events: none; }
 .cover-title {
@@ -226,7 +226,7 @@ h1 em { color: #e9b84a; font-weight: 400; }
 }
 .page .inner { position: absolute; inset: 7% 9% 8.5%; }
 .page .folio { position: absolute; bottom: 3.2%; left: 0; right: 0; text-align: center; font-size: calc(var(--pw) * .026); color: var(--muted); letter-spacing: .1em; }
-.page canvas.splat-layer { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; z-index: 2; mix-blend-mode: multiply; }
+.page canvas.splat-layer { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; z-index: 2; }
 
 /* modo libro abierto (escritorio) */
 .book.spread .leaf {
@@ -277,8 +277,9 @@ h1 em { color: #e9b84a; font-weight: 400; }
 @keyframes breathe { 50% { opacity: .35 } }
 
 .p-epigraph .inner { display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center; }
-.p-epigraph blockquote { margin: 0; font-family: var(--display); font-style: italic; font-size: calc(var(--pw) * .06); line-height: 1.25; color: var(--ink-2); }
-.p-epigraph cite { display: block; margin-top: 1.4em; font-style: normal; font-size: calc(var(--pw) * .028); letter-spacing: .25em; text-transform: uppercase; color: var(--muted); }
+.p-epigraph blockquote { margin: 0; font-family: var(--display); font-style: italic; font-size: calc(var(--pw) * .052); line-height: 1.3; color: var(--ink-2); }
+/* la fuente del epígrafe: pequeña y discreta, para que no parezca un título */
+.p-epigraph cite { display: block; margin-top: 1.6em; font-style: italic; font-size: calc(var(--pw) * .03); letter-spacing: .02em; color: var(--muted); }
 
 .p-index h2 { font-family: var(--display); font-weight: 500; font-size: calc(var(--pw) * .07); margin: 8% 0 8%; text-align: center; }
 .p-index ol { list-style: none; margin: 0; padding: 0; counter-reset: i; }
@@ -295,7 +296,7 @@ h1 em { color: #e9b84a; font-weight: 400; }
 .p-end h2 { font-family: var(--display); font-weight: 500; font-style: italic; font-size: calc(var(--pw) * .08); margin: 0; line-height: 1; }
 .p-end p { margin: 0; color: var(--ink-2); font-size: calc(var(--pw) * .036); max-width: 26ch; }
 .p-end .btn { font-size: calc(var(--pw) * .034); }
-.p-end .contact { justify-content: center; font-size: calc(var(--pw) * .032); }
+.p-end .contact { display: flex; flex-direction: column; align-items: center; gap: .55em; margin-top: .3em; font-size: calc(var(--pw) * .032); }
 
 /* oda */
 .flow { position: absolute; inset: 0; font-size: var(--fs); line-height: 1.42; hyphens: manual; }
@@ -356,8 +357,8 @@ h1 em { color: #e9b84a; font-weight: 400; }
 }
 .reader-bar > * { pointer-events: auto; }
 .reader-title {
-  flex: 0 1 auto; max-width: 52vw; padding: .32em 1.1em; border-radius: 999px;
-  background: rgba(20, 17, 14, .42); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+  flex: 0 1 auto; max-width: 52vw; padding: .32em 1.1em; border-radius: 999px; color: #fbf4e6;
+  background: rgba(20, 17, 14, .74); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
   border: 1px solid rgba(239, 230, 214, .1);
 }
 .icon-btn { background: rgba(20, 17, 14, .42); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); }
