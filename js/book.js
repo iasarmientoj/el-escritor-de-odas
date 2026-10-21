@@ -1,6 +1,7 @@
 // Lector del libro: paginación, paso de página y audio sincronizado con los splats.
 import { createView, destroyView, setVisible, pointer, supported } from './splats.js';
 import { CONFIG, buyHref } from './config.js';
+import { eventoUnaVez } from './analitica.js';
 
 const ROMAN = ['I', 'II', 'III', 'IV', 'V', 'VI', 'VII', 'VIII', 'IX', 'X', 'XI', 'XII'];
 const COVER_SPLATS = 'assets/splats/oda-al-girasol-feliz.bin';
@@ -838,6 +839,7 @@ export class Reader {
       return;
     }
     const poem = this.poems[k];
+    eventoUnaVez('ver_oda', poem.title);
     ui.player.classList.remove('off');
     ui.now.textContent = poem.title;
     a.src = poem.audio;
@@ -888,12 +890,16 @@ export class Reader {
       if (this.audioPoem < 0) return;
       if (a.paused) this.playPoem(this.audioPoem); else a.pause();
     });
-    a.addEventListener('play', () => { this.setPlaying(true); this.updateBar(); });
+    a.addEventListener('play', () => {
+      this.setPlaying(true); this.updateBar();
+      if (this.audioPoem >= 0) eventoUnaVez('escuchar_oda', this.poems[this.audioPoem].title);
+    });
     a.addEventListener('pause', () => { this.setPlaying(false); this.updateBar(); });
     a.addEventListener('timeupdate', () => this.updateBar());
     a.addEventListener('loadedmetadata', () => this.updateBar());
     a.addEventListener('ended', () => {
       const k = this.audioPoem;
+      if (k >= 0) eventoUnaVez('oda_completa', this.poems[k].title);
       this.saved[k] = { t: 0, ratio: 1 };
       this.setPlaying(false);
       if (CONFIG.autoContinue && k < this.poems.length - 1) {

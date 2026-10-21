@@ -1,6 +1,7 @@
 import { CONFIG, buyHref } from './config.js';
 import { createView, destroyView, setVisible, pointer, wipe, supported } from './splats.js';
 import { Reader } from './book.js';
+import { evento } from './analitica.js';
 
 const $ = (s, r = document) => r.querySelector(s);
 const $$ = (s, r = document) => [...r.querySelectorAll(s)];
@@ -9,6 +10,14 @@ const $$ = (s, r = document) => [...r.querySelectorAll(s)];
 $$('[data-buy]').forEach(a => {
   a.href = buyHref();
   if (CONFIG.buyUrl) { a.target = '_blank'; a.rel = 'noopener'; }
+});
+// clics en comprar y en TikTok, estén en la portada o dentro del lector
+document.addEventListener('click', e => {
+  const a = e.target.closest('a');
+  if (!a) return;
+  const lugar = a.closest('#reader') ? 'lector' : 'portada';
+  if (a.href === buyHref() || a.hasAttribute('data-buy')) evento('clic_comprar', { lugar });
+  else if (CONFIG.tiktokUrl && a.href === CONFIG.tiktokUrl) evento('clic_tiktok', { lugar });
 });
 $$('[data-tiktok]').forEach(a => {
   if (!CONFIG.tiktokUrl) { a.hidden = true; return; }
@@ -93,6 +102,7 @@ async function route() {
 // pantalla, se disuelven y debajo aparece el lector con la portada lista.
 let opening = false;
 async function openBook() {
+  evento('abrir_libro');
   cameFromLanding = true;
   const calm = matchMedia('(prefers-reduced-motion: reduce)').matches;
   if (!coverView || !coverView.set || calm || !reader) { location.hash = 'libro'; return; }
